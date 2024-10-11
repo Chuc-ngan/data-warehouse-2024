@@ -13,10 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -98,22 +95,71 @@ public class CrawlDataAPI {
                                     }
                                 }
 
-                                // Lấy danh sách size từ 'configurable_options'
-                                List<String> sizes = new ArrayList<>();
-                                JsonNode configurableOptions = detailNode.path("configurable_options");
-                                for (JsonNode option : configurableOptions) {
-                                    if (option.path("name").asText().equals("Kích cỡ")) {  // Chỉ lấy size từ trường 'Kích cỡ'
+                                // Lấy thông tin về các tùy chọn cấu hình (configurable options)
+                                JsonNode configurableOptionsNode = detailNode.path("configurable_options");
+                                Map<String, List<String>> optionValues = new HashMap<>();
+                                if (configurableOptionsNode.isArray()) {
+                                    for (JsonNode option : configurableOptionsNode) {
+                                        String optionName = option.path("name").asText("Unknown");
+                                        List<String> values = new ArrayList<>();
                                         for (JsonNode value : option.path("values")) {
-                                            sizes.add(value.path("label").asText());
+                                            String label = value.path("label").asText("Không có");
+                                            values.add(label);
                                         }
+                                        optionValues.put(optionName, values);
                                     }
                                 }
-                                product.setSize(sizes);
+                                Map<String, List<String>> optionValuesColor = new HashMap<>();
+                                if (configurableOptionsNode.isArray()) {
+                                    for (JsonNode option : configurableOptionsNode) {
+                                        String optionName = option.path("name").asText("Unknown");
+                                        List<String> values = new ArrayList<>();
+                                        for (JsonNode value : option.path("values")) {
+                                            String label = value.path("label").asText("Không có");
+                                            values.add(label);
+                                        }
+                                        optionValues.put(optionName, values);
+                                    }
+                                }
 
-                                // Lưu các thuộc tính cần thiết vào sản phẩm
+                                // Lấy thông tin về các sản phẩm con (variations)
+                                List<Map<String, Object>> variations = new ArrayList<>();
+                                JsonNode configurableProducts = detailNode.path("configurable_products");
+
+                                if (configurableProducts.isArray()) {
+                                    for (JsonNode variation : configurableProducts) {
+                                        List<String> variationOptions = new ArrayList<>();
+
+                                        // Lấy các tùy chọn từ variation
+                                        String option1Name = variation.path("option1").asText("Unknown");
+                                        String option1Value = variation.path("option1").asText("Không có");
+                                        variationOptions.add(option1Name + ": " + option1Value);
+
+                                        String option2Name = variation.path("option2").asText("Unknown");
+                                        String option2Value = variation.path("option2").asText("Không có");
+                                        variationOptions.add(option2Name + ": " + option2Value);
+
+                                        // Tạo Map cho dữ liệu variation
+                                        Map<String, Object> variationData = new HashMap<>();
+                                        variationData.put("child_id", variation.path("child_id").asInt());
+                                        variationData.put("sku", variation.path("sku").asText());
+                                        variationData.put("name", variation.path("name").asText());
+                                        variationData.put("original_price", variation.path("original_price").asDouble());
+                                        variationData.put("price", variation.path("price").asDouble());
+                                        variationData.put("inventory_status", variation.path("inventory_status").asText());
+                                        variationData.put("options", String.join(", ", variationOptions));
+
+                                        variations.add(variationData);
+                                    }
+                                }
+
+                                // Cập nhật mô tả và hình ảnh cho sản phẩm
                                 product.setShortDescription(description);
                                 product.setThumbnailUrl(thumbnailUrl);
                                 product.setImages(images);
+                                product.setColor(optionValuesColor);
+                                product.setSize(optionValues);
+                                product.setVariations(variations);
                             } else {
                                 logger.error("Failed to fetch details for product ID {}: HTTP response code {}", pid, detailResponseCode);
                             }

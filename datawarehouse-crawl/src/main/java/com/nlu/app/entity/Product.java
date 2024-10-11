@@ -1,6 +1,7 @@
 package com.nlu.app.entity;
 
 import java.util.List;
+import java.util.Map;
 
 public class Product {
 
@@ -12,7 +13,6 @@ public class Product {
     private double listPrice;
     private double originalPrice;
     private double discount;
-    private List<String> size;
     private double discountRate;
     private int reviewCount;
     private int orderCount;
@@ -27,6 +27,34 @@ public class Product {
     private String urlKey;
     private String urlPath;
     private List<String> images;
+    private List<Map<String, Object>> variations;
+    private Map<String, String> specifications;
+    private Map<String, List<String>> size;
+    private Map<String, List<String>> color;
+
+    public Map<String, List<String>> getColor() {
+        return color;
+    }
+
+    public void setColor(Map<String, List<String>> color) {
+        this.color = color;
+    }
+
+    public Map<String, List<String>> getSize() {
+        return size;
+    }
+
+    public void setSize(Map<String, List<String>> size) {
+        this.size = size;
+    }
+
+    public List<Map<String, Object>> getVariations() {
+        return variations;
+    }
+
+    public void setVariations(List<Map<String, Object>> variations) {
+        this.variations = variations;
+    }
 
     public String getId() {
         return id;
@@ -42,14 +70,6 @@ public class Product {
 
     public void setSpid(String spid) {
         this.spid = spid;
-    }
-
-    public List<String> getSize() {
-        return size;
-    }
-
-    public void setSize(List<String> size) {
-        this.size = size;
     }
 
     public String getSku() {
@@ -212,6 +232,14 @@ public class Product {
         this.images = images;
     }
 
+    public Map<String, String> getSpecifications() {
+        return specifications;
+    }
+
+    public void setSpecifications(Map<String, String> specifications) {
+        this.specifications = specifications;
+    }
+
     @Override
     public String toString() {
         return "Product{" +
@@ -238,4 +266,6 @@ public class Product {
                 ", images=" + images +
                 '}';
     }
+
+
 }
