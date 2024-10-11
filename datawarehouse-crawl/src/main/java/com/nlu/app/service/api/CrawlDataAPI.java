@@ -1,15 +1,14 @@
-package com.nlu.app.api;
+package com.nlu.app.service.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nlu.app.helper.CsvReader;
-import com.nlu.app.model.Product;
-import com.nlu.app.helper.ProductParser;
+import com.nlu.app.utils.CsvReader;
+import com.nlu.app.entity.Product;
+import com.nlu.app.utils.ProductParser;
 import com.opencsv.CSVWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -121,7 +120,10 @@ public class CrawlDataAPI {
     }
 
     public void saveProductsToCsv(List<Product> products) {
-        String csvFilePath = "D:\\workspace\\Project\\DataWarehouse\\data-warehouse-2024\\datawarehouse-crawl\\crawl.csv"; // Đường dẫn file CSV
+        String currentDirectory = System.getProperty("user.dir");
+
+        // Nối đường dẫn thư mục hiện tại với tên tệp CSV
+        String csvFilePath = currentDirectory + "\\data\\crawl-data.csv";
 
         try (CSVWriter writer = new CSVWriter(new FileWriter(csvFilePath))) {
             // Ghi tiêu đề CSV
@@ -165,7 +167,13 @@ public class CrawlDataAPI {
     public static void main(String[] args) {
         CrawlDataAPI crawlDataAPI = new CrawlDataAPI();
         CsvReader csvReader = new CsvReader();
-        List<String> productIds = csvReader.readProductIdsFromCsv("D:\\workspace\\Project\\DataWarehouse\\data-warehouse-2024\\datawarehouse-crawl\\products_id.csv");
+        // Lấy thư mục hiện tại
+        String currentDirectory = System.getProperty("user.dir");
+
+        // Nối đường dẫn thư mục hiện tại với tên tệp CSV
+        String csvFilePath = currentDirectory + "\\data\\products_id.csv";
+        // Đọc danh sách product IDs từ tệp CSV
+        List<String> productIds = csvReader.readProductIdsFromCsv(csvFilePath);
 
         // Lấy tối đa 10 ID sản phẩm từ danh sách
         List<String> limitedProductIds = new ArrayList<>(productIds.subList(0, Math.min(productIds.size(), 10)));

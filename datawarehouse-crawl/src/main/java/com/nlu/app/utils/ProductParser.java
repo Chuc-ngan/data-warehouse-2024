@@ -1,8 +1,8 @@
-package com.nlu.app.helper;
+package com.nlu.app.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nlu.app.model.Product;
+import com.nlu.app.entity.Product;
 
 import java.io.IOException;
 import java.util.ArrayList;

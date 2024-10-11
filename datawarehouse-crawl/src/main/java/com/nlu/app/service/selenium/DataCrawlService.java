@@ -1,4 +1,4 @@
-package com.nlu.app.service;
+package com.nlu.app.service.selenium;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

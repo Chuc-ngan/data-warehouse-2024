@@ -1,4 +1,4 @@
-package com.nlu.app.model;
+package com.nlu.app.entity;
 
 import java.util.List;
 

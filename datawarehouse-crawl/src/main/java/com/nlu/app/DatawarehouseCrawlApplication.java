@@ -1,11 +1,9 @@
 package com.nlu.app;
 
-import com.nlu.app.service.DataCrawlService;
+import com.nlu.app.service.selenium.DataCrawlService;
 import com.opencsv.CSVWriter;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.text.StringEscapeUtils;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
