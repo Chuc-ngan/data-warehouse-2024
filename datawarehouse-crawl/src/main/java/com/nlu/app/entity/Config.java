@@ -18,6 +18,6 @@ public class Config {
     private int timeout;
     private boolean isActive;     // Thêm biến isActive để bật/tắt cấu hình
     private LocalDateTime lastUpdated;  // Thời gian cập nhật cấu hình gần nhất
-    
+
 
 }

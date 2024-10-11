@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nlu.app.utils.CsvReader;
 import com.nlu.app.entity.Product;
+import com.nlu.app.utils.ProductCsvWriter;
 import com.nlu.app.utils.ProductParser;
 import com.opencsv.CSVWriter;
 import org.slf4j.Logger;
@@ -11,9 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -95,10 +95,71 @@ public class CrawlDataAPI {
                                     }
                                 }
 
-                                // Lưu các thuộc tính cần thiết vào sản phẩm
+                                // Lấy thông tin về các tùy chọn cấu hình (configurable options)
+                                JsonNode configurableOptionsNode = detailNode.path("configurable_options");
+                                Map<String, List<String>> optionValues = new HashMap<>();
+                                if (configurableOptionsNode.isArray()) {
+                                    for (JsonNode option : configurableOptionsNode) {
+                                        String optionName = option.path("name").asText("Unknown");
+                                        List<String> values = new ArrayList<>();
+                                        for (JsonNode value : option.path("values")) {
+                                            String label = value.path("label").asText("Không có");
+                                            values.add(label);
+                                        }
+                                        optionValues.put(optionName, values);
+                                    }
+                                }
+                                Map<String, List<String>> optionValuesColor = new HashMap<>();
+                                if (configurableOptionsNode.isArray()) {
+                                    for (JsonNode option : configurableOptionsNode) {
+                                        String optionName = option.path("name").asText("Unknown");
+                                        List<String> values = new ArrayList<>();
+                                        for (JsonNode value : option.path("values")) {
+                                            String label = value.path("label").asText("Không có");
+                                            values.add(label);
+                                        }
+                                        optionValues.put(optionName, values);
+                                    }
+                                }
+
+                                // Lấy thông tin về các sản phẩm con (variations)
+                                List<Map<String, Object>> variations = new ArrayList<>();
+                                JsonNode configurableProducts = detailNode.path("configurable_products");
+
+                                if (configurableProducts.isArray()) {
+                                    for (JsonNode variation : configurableProducts) {
+                                        List<String> variationOptions = new ArrayList<>();
+
+                                        // Lấy các tùy chọn từ variation
+                                        String option1Name = variation.path("option1").asText("Unknown");
+                                        String option1Value = variation.path("option1").asText("Không có");
+                                        variationOptions.add(option1Name + ": " + option1Value);
+
+                                        String option2Name = variation.path("option2").asText("Unknown");
+                                        String option2Value = variation.path("option2").asText("Không có");
+                                        variationOptions.add(option2Name + ": " + option2Value);
+
+                                        // Tạo Map cho dữ liệu variation
+                                        Map<String, Object> variationData = new HashMap<>();
+                                        variationData.put("child_id", variation.path("child_id").asInt());
+                                        variationData.put("sku", variation.path("sku").asText());
+                                        variationData.put("name", variation.path("name").asText());
+                                        variationData.put("original_price", variation.path("original_price").asDouble());
+                                        variationData.put("price", variation.path("price").asDouble());
+                                        variationData.put("inventory_status", variation.path("inventory_status").asText());
+                                        variationData.put("options", String.join(", ", variationOptions));
+
+                                        variations.add(variationData);
+                                    }
+                                }
+
+                                // Cập nhật mô tả và hình ảnh cho sản phẩm
                                 product.setShortDescription(description);
                                 product.setThumbnailUrl(thumbnailUrl);
                                 product.setImages(images);
+                                product.setColor(optionValuesColor);
+                                product.setSize(optionValues);
+                                product.setVariations(variations);
                             } else {
                                 logger.error("Failed to fetch details for product ID {}: HTTP response code {}", pid, detailResponseCode);
                             }
@@ -119,51 +180,6 @@ public class CrawlDataAPI {
         return products;
     }
 
-    public void saveProductsToCsv(List<Product> products) {
-        String currentDirectory = System.getProperty("user.dir");
-
-        // Nối đường dẫn thư mục hiện tại với tên tệp CSV
-        String csvFilePath = currentDirectory + "\\data\\crawl-data.csv";
-
-        try (CSVWriter writer = new CSVWriter(new FileWriter(csvFilePath))) {
-            // Ghi tiêu đề CSV
-            String[] header = {"id", "sku", "description", "price", "listPrice", "original_price", "discount", "discountRate",
-                    "reviewCount", "inventoryStatus", "stockItemMaxSaleQty",
-                    "productName", "brandId", "brandName", "thumbnail_url", "url_key", "url_path", "rating_average", "images"};
-            writer.writeNext(header);
-
-            // Ghi dữ liệu sản phẩm
-            for (Product product : products) {
-                String[] data = {
-                        product.getId(),
-                        product.getSku(),
-                        product.getShortDescription(),
-                        String.valueOf(product.getPrice()),
-                        String.valueOf(product.getListPrice()),
-                        String.valueOf(product.getOriginalPrice()),
-                        String.valueOf(product.getDiscount()),
-                        String.valueOf(product.getDiscountRate()),
-                        String.valueOf(product.getReviewCount()),
-                        product.getInventoryStatus(),
-                        String.valueOf(product.getStockItemMaxSaleQty()),
-                        product.getProductName(),
-                        String.valueOf(product.getBrandId()),
-                        product.getBrandName(),
-                        product.getThumbnailUrl(),
-                        product.getUrlKey(),
-                        product.getUrlPath(),
-                        String.valueOf(product.getRatingAverage()),
-                        String.valueOf(product.getImages())
-                };
-                writer.writeNext(data);
-            }
-
-            logger.info("Products saved to CSV at: {}", csvFilePath);
-        } catch (IOException e) {
-            logger.error("Error saving products to CSV: {}", e.getMessage());
-        }
-    }
-
     public static void main(String[] args) {
         CrawlDataAPI crawlDataAPI = new CrawlDataAPI();
         CsvReader csvReader = new CsvReader();
@@ -180,6 +196,13 @@ public class CrawlDataAPI {
 
         // Crawl dữ liệu sản phẩm
         List<Product> products = crawlDataAPI.fetchProducts(limitedProductIds);
-        crawlDataAPI.saveProductsToCsv(products);
+        ProductCsvWriter productCsvWriter = new ProductCsvWriter();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        String timestamp = dateFormat.format(new Date());
+
+        // Tạo đường dẫn tệp với tên file chứa ngày giờ hiện tại
+        String csvOutputPath = currentDirectory + "\\data\\crawl_data_" + timestamp + ".csv";
+
+        productCsvWriter.saveProductsToCsv(products, csvOutputPath);
     }
 }
