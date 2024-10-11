@@ -10,8 +10,9 @@ public class Product {
     private String shortDescription;
     private double price;
     private double listPrice;
-    private double originalPrice;  // Thêm trường originalPrice
+    private double originalPrice;
     private double discount;
+    private List<String> size;
     private double discountRate;
     private int reviewCount;
     private int orderCount;
@@ -41,6 +42,14 @@ public class Product {
 
     public void setSpid(String spid) {
         this.spid = spid;
+    }
+
+    public List<String> getSize() {
+        return size;
+    }
+
+    public void setSize(List<String> size) {
+        this.size = size;
     }
 
     public String getSku() {

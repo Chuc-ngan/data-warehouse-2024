@@ -57,6 +57,22 @@ public class ProductParser {
             product.setImages(new ArrayList<>()); // Nếu không có hình ảnh, khởi tạo danh sách rỗng
         }
 
+        // Lấy danh sách kích cỡ từ 'configurable_options'
+        List<String> sizes = new ArrayList<>();
+        JsonNode configurableOptions = json.get("configurable_options");
+        if (configurableOptions != null && configurableOptions.isArray()) {
+            for (JsonNode option : configurableOptions) {
+                if (option.has("name") && option.get("name").asText().equals("Kích cỡ")) {  // Chỉ lấy size từ trường 'Kích cỡ'
+                    for (JsonNode value : option.get("values")) {
+                        if (value.has("label")) {
+                            sizes.add(value.get("label").asText());
+                        }
+                    }
+                }
+            }
+        }
+        product.setSize(sizes);
+
         return product;
     }
 }

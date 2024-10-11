@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nlu.app.utils.CsvReader;
 import com.nlu.app.entity.Product;
+import com.nlu.app.utils.ProductCsvWriter;
 import com.nlu.app.utils.ProductParser;
 import com.opencsv.CSVWriter;
 import org.slf4j.Logger;
@@ -11,7 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -95,6 +98,18 @@ public class CrawlDataAPI {
                                     }
                                 }
 
+                                // Lấy danh sách size từ 'configurable_options'
+                                List<String> sizes = new ArrayList<>();
+                                JsonNode configurableOptions = detailNode.path("configurable_options");
+                                for (JsonNode option : configurableOptions) {
+                                    if (option.path("name").asText().equals("Kích cỡ")) {  // Chỉ lấy size từ trường 'Kích cỡ'
+                                        for (JsonNode value : option.path("values")) {
+                                            sizes.add(value.path("label").asText());
+                                        }
+                                    }
+                                }
+                                product.setSize(sizes);
+
                                 // Lưu các thuộc tính cần thiết vào sản phẩm
                                 product.setShortDescription(description);
                                 product.setThumbnailUrl(thumbnailUrl);
@@ -119,51 +134,6 @@ public class CrawlDataAPI {
         return products;
     }
 
-    public void saveProductsToCsv(List<Product> products) {
-        String currentDirectory = System.getProperty("user.dir");
-
-        // Nối đường dẫn thư mục hiện tại với tên tệp CSV
-        String csvFilePath = currentDirectory + "\\data\\crawl-data.csv";
-
-        try (CSVWriter writer = new CSVWriter(new FileWriter(csvFilePath))) {
-            // Ghi tiêu đề CSV
-            String[] header = {"id", "sku", "description", "price", "listPrice", "original_price", "discount", "discountRate",
-                    "reviewCount", "inventoryStatus", "stockItemMaxSaleQty",
-                    "productName", "brandId", "brandName", "thumbnail_url", "url_key", "url_path", "rating_average", "images"};
-            writer.writeNext(header);
-
-            // Ghi dữ liệu sản phẩm
-            for (Product product : products) {
-                String[] data = {
-                        product.getId(),
-                        product.getSku(),
-                        product.getShortDescription(),
-                        String.valueOf(product.getPrice()),
-                        String.valueOf(product.getListPrice()),
-                        String.valueOf(product.getOriginalPrice()),
-                        String.valueOf(product.getDiscount()),
-                        String.valueOf(product.getDiscountRate()),
-                        String.valueOf(product.getReviewCount()),
-                        product.getInventoryStatus(),
-                        String.valueOf(product.getStockItemMaxSaleQty()),
-                        product.getProductName(),
-                        String.valueOf(product.getBrandId()),
-                        product.getBrandName(),
-                        product.getThumbnailUrl(),
-                        product.getUrlKey(),
-                        product.getUrlPath(),
-                        String.valueOf(product.getRatingAverage()),
-                        String.valueOf(product.getImages())
-                };
-                writer.writeNext(data);
-            }
-
-            logger.info("Products saved to CSV at: {}", csvFilePath);
-        } catch (IOException e) {
-            logger.error("Error saving products to CSV: {}", e.getMessage());
-        }
-    }
-
     public static void main(String[] args) {
         CrawlDataAPI crawlDataAPI = new CrawlDataAPI();
         CsvReader csvReader = new CsvReader();
@@ -180,6 +150,13 @@ public class CrawlDataAPI {
 
         // Crawl dữ liệu sản phẩm
         List<Product> products = crawlDataAPI.fetchProducts(limitedProductIds);
-        crawlDataAPI.saveProductsToCsv(products);
+        ProductCsvWriter productCsvWriter = new ProductCsvWriter();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        String timestamp = dateFormat.format(new Date());
+
+        // Tạo đường dẫn tệp với tên file chứa ngày giờ hiện tại
+        String csvOutputPath = currentDirectory + "\\data\\crawl_data_" + timestamp + ".csv";
+
+        productCsvWriter.saveProductsToCsv(products, csvOutputPath);
     }
 }
