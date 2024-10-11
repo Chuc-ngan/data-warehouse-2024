@@ -1,6 +1,5 @@
-package com.nlu.app;
+package com.nlu.app.service.selenium;
 
-import com.nlu.app.service.selenium.DataCrawlService;
 import com.opencsv.CSVWriter;
 import lombok.RequiredArgsConstructor;
 import org.openqa.selenium.By;
@@ -21,9 +20,9 @@ import java.util.List;
 
 @SpringBootApplication
 @RequiredArgsConstructor
-public class DatawarehouseCrawlApplication {
+public class CrawlDataSelenium {
     public static void main(String[] args) throws InterruptedException, IOException {
-        SpringApplication.run(DatawarehouseCrawlApplication.class, args);
+        SpringApplication.run(CrawlDataSelenium.class, args);
 
         // Tạo ChromeOptions và set chế độ chạy ẩn
         ChromeOptions options = new ChromeOptions();
