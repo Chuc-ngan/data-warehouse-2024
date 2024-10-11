@@ -132,7 +132,7 @@ public class DatawarehouseCrawlApplication {
 //                System.out.println("Thông tin sản phẩm: " + infoHtml);
                 System.out.println("-------------------------------------------");
 //                String[] header = {"productLink","productName", "productImg", "description", "price", "trademark"};
-                writer.writeNext(new String[]{productLink,productName, imgUrl,infoHtml.get(0) ,infoHtml.get(1) ,infoHtml.get(2),productPrice});
+                writer.writeNext(new String[]{productLink,productName, imgUrl,infoHtml.get(0) ,infoHtml.get(1) ,infoHtml.get(2),productPrice, infoHtml.get(3)});
                 count++;
             } catch (Exception e) {
                 e.printStackTrace();

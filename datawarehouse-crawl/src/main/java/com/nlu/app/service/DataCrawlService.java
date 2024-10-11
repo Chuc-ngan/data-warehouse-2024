@@ -19,7 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class DataCrawlService {
-
     public static List<String> crawl(String webURL) throws InterruptedException {
         List<String> productDetails = new ArrayList<>(); // Danh sách chứa thông tin sản phẩm
 
@@ -85,11 +84,21 @@ public class DataCrawlService {
                     // Tạo chuỗi từ danh sách màu sắc
                     String colorsString = String.join(", ", colors);
 
+                    // Tìm thẻ a chứa thương hiệu
+                    WebElement brandElement = modalContent.findElement(By.cssSelector("a[data-view-id='pdp_details_view_brand']"));
+
+                    // Lấy URL của thương hiệu
+                    String brandUrl = brandElement.getAttribute("href");
+                    String brandName = brandElement.getText(); // Lấy tên thương hiệu
+
+//                    System.out.println("URL thương hiệu: " + brandUrl);
+//                    System.out.println("Tên thương hiệu: " + brandName);
+
                     productDetails.add(content); // Thêm nội dung vào danh sách
                     productDetails.add(sizesString); // Thêm kích thước vào danh sách
                     productDetails.add(colorsString); // Thêm màu sắc vào danh sách
+                    productDetails.add(brandName);//Thêm thương hiệu vào danh sách
                     return productDetails; // Trả về danh sách chứa thông tin
-
 
                 } else {
                     System.out.println("Nội dung modal không hiển thị.");
