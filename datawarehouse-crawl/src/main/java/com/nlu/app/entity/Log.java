@@ -4,20 +4,20 @@ import java.time.LocalDateTime;
 
 public class Log {
     private int id;
-    private String idConfig;
-    private String name;
-    private Status status;
-    private String fileName;
+    private Config idConfig;
+    private LogLevel logLevel;
     private int count;
     private String location;
     private LocalDateTime time;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
+    private String errorMessage;
+    private String stackTrace;  // Chi tiết stack trace khi xảy ra lỗi
+    private int retryCount;  // Số lần thử lại khi crawl thất bại
+    private Status status;  // Trạng thái của quá trình crawl
+    private long dataSize;  // Kích thước dữ liệu đã crawl
     private String createdBy;
     private String updatedBy;
-    private String errorMessage;
-    private long dataSize;      // Kích thước dữ liệu crawl
-    private long crawlDuration; // Thời gian hoàn thành crawl
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 
 
 }

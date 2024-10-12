@@ -5,5 +5,4 @@ public enum Status {
     SUCCESS_EXTRACT,  // Trích xuất thành công
     FAILED_EXTRACT,  // Trích xuất thất bại
     PROCESSING;  // Đang xử lý
-
 }
