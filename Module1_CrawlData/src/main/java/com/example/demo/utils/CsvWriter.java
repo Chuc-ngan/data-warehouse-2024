@@ -1,12 +1,20 @@
 package com.example.demo.utils;
 
+import com.example.demo.model.EmailDetails;
 import com.example.demo.model.Product;
+import com.example.demo.service.emailService.EmailServiceImpl;
+import com.example.demo.service.emailService.IEmailService;
 import com.opencsv.CSVWriter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Component
 public class CsvWriter {
     public void writeProductsToCsv(List<Product> products, String filePath) {
         try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
@@ -44,6 +52,7 @@ public class CsvWriter {
                 writer.writeNext(productData);
                 System.out.println("Dữ liệu đã được lưu vào file CSV: " + filePath);
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
