@@ -27,3 +27,9 @@ Dự án này là một ứng dụng Java Spring Boot dùng để crawl dữ li�
    spring.mail.port=587
    spring.mail.properties.mail.smtp.auth=true
    spring.mail.properties.mail.smtp.starttls.enable=true
+
+
+### Ghi Chú
+- Hãy chắc chắn rằng bạn đã thay đổi các thông tin như `<tên_cơ_sở_dữ_liệu>`, `<tên_người_dùng>`, `<mật_khẩu>`, `<email_username>`, và `<email_password>` với thông tin thực tế của bạn.
+- Đảm bảo bạn thay thế `email@example.com` bằng địa chỉ email thực tế của người nhận trước khi chạy ứng dụng.
+- Bạn có thể thêm hoặc chỉnh sửa các phần trong README.md dựa trên nhu cầu cụ thể của dự án hoặc người dùng.
