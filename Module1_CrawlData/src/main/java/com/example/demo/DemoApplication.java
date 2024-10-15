@@ -1,7 +1,10 @@
 package com.example.demo;
 
+import com.example.demo.model.EmailDetails;
 import com.example.demo.model.Product;
 import com.example.demo.service.crawler.CrawlService;
+import com.example.demo.service.emailService.EmailServiceImpl;
+import com.example.demo.service.emailService.IEmailService;
 import com.example.demo.utils.CsvReader;
 import com.example.demo.utils.CsvWriter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +14,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.nio.file.FileSystems;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +25,13 @@ public class DemoApplication implements CommandLineRunner {
 
 	@Autowired
 	private CrawlService crawlService;
+
+	private final EmailServiceImpl emailService;
+
+	@Autowired
+	public DemoApplication(EmailServiceImpl emailService) {
+		this.emailService = emailService;
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
@@ -31,7 +43,7 @@ public class DemoApplication implements CommandLineRunner {
 		String currentDirectory = System.getProperty("user.dir");
 		String csvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()+ "data" +  FileSystems.getDefault().getSeparator()+"products_id.csv";
 		List<String> productIds = csvReader.readProductIdsFromCsv(csvFilePath);
-		List<String> limitedProductIds = productIds.size() > 10 ? productIds.subList(0, 10) : productIds;
+		List<String> limitedProductIds = productIds.size() > 5 ? productIds.subList(0, 5) : productIds;
 
 		List<Product> products = crawlService.crawlProducts(limitedProductIds);
 
@@ -40,6 +52,16 @@ public class DemoApplication implements CommandLineRunner {
 		String timestamp = dateFormat.format(new Date());
 		String outputCsvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()+ "data" +  FileSystems.getDefault().getSeparator()+"crawl_data_" + timestamp + ".csv";
 		csvWriter.writeProductsToCsv(products, outputCsvFilePath);
+
+		String subject = "Thông báo lưu dữ liệu thành công";
+		String body = String.format("Dữ liệu sản phẩm đã được lưu thành công vào file: %s%n", outputCsvFilePath) +
+				String.format("Thời gian crawl: %s%n", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"))) +
+				String.format("Số lượng sản phẩm đã lưu: %d", products.size());
+		String recipient = "";
+
+//		String result = emailService.sendSimpleMail(new EmailDetails(recipient, body, subject, ""));
+//		System.out.println(result);
+
 		products.forEach(product -> {
 			System.out.println("Product ID: " + product.getId());
 			System.out.println("Product Sku: " + product.getSku());
