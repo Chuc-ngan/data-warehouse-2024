@@ -23,8 +23,7 @@ public class CrawlController {
     }
 
     @GetMapping("/products")
-    public List<Product> crawlProducts() throws InterruptedException, JsonProcessingException {
-        List<String> productIds = Arrays.asList("75031062", "216098291", "163806087");
+    public List<Product> crawlProducts( List<String> productIds) throws InterruptedException, JsonProcessingException {
         return crawlService.crawlProducts(productIds);
     }
 

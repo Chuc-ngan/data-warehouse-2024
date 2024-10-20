@@ -9,6 +9,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,10 +94,7 @@ public class CrawlService {
                     product.setReviewCount(getReviewCount(productDetailData));
 
                     product.setQuantitySold(getQuantitySold(productDetailData));
-
-
-
-
+                    product.setCreateTime(LocalDateTime.now());
                 }
                 result.add(product);
                 // Đợi ngẫu nhiên giữa các yêu cầu
@@ -135,7 +133,7 @@ public class CrawlService {
         if (productData.has("url_key") && !productData.get("url_key").isNull()) {
             return productData.get("url_key").asText();
         } else {
-            System.out.println("URL key not found or is null");
+//            System.out.println("URL key not found or is null");
             return "Unknown URL Key";
         }
     }
@@ -144,7 +142,7 @@ public class CrawlService {
         if (productData.has("url_path") && !productData.get("url_path").isNull()) {
             return productData.get("url_path").asText();
         } else {
-            System.out.println("URL path not found or is null");
+//            System.out.println("URL path not found or is null");
             return "Unknown URL Path";
         }
     }
@@ -153,7 +151,7 @@ public class CrawlService {
         if (productData.has("short_url") && !productData.get("short_url").isNull()) {
             return productData.get("short_url").asText();
         } else {
-            System.out.println("Short URL not found or is null");
+//            System.out.println("Short URL not found or is null");
             return "Unknown Short URL";
         }
     }
@@ -162,7 +160,7 @@ public class CrawlService {
         if (productData.has("type") && !productData.get("type").isNull()) {
             return productData.get("type").asText();
         } else {
-            System.out.println("Type not found or is null");
+//            System.out.println("Type not found or is null");
             return "Unknown Type";
         }
     }
@@ -173,7 +171,7 @@ public class CrawlService {
         if (brandNode != null && !brandNode.isNull() && brandNode.has("name")) {
             return brandNode.get("name").asText();
         } else {
-            System.out.println("Brand name not found or is null");
+//            System.out.println("Brand name not found or is null");
             return "Unknown Brand";
         }
     }
@@ -219,7 +217,7 @@ public class CrawlService {
                 }
             }
         } else {
-            System.out.println("Images not found or is not an array");
+//            System.out.println("Images not found or is not an array");
         }
 
         return imageUrls;
@@ -243,7 +241,7 @@ public class CrawlService {
                 }
             }
         } else {
-            System.out.println("Colors not found or is not an array");
+//            System.out.println("Colors not found or is not an array");
         }
 
         return colors;
@@ -267,7 +265,7 @@ public class CrawlService {
                 }
             }
         } else {
-            System.out.println("Sizes not found or is not an array");
+//            System.out.println("Sizes not found or is not an array");
         }
 
         return sizes;
@@ -278,7 +276,7 @@ public class CrawlService {
         if (ratingAverageNode != null && !ratingAverageNode.isNull()) {
             return ratingAverageNode.asDouble(); // Trả về giá trị double
         } else {
-            System.out.println("Rating average not found or is null");
+//            System.out.println("Rating average not found or is null");
             return 0.0;
         }
     }
@@ -289,7 +287,7 @@ public class CrawlService {
         if (reviewCountNode != null && !reviewCountNode.isNull()) {
             return reviewCountNode.asInt(); // Trả về giá trị int
         } else {
-            System.out.println("Review count not found or is null");
+//            System.out.println("Review count not found or is null");
             return 0;
         }
     }
@@ -300,7 +298,7 @@ public class CrawlService {
         if (discountRateNode != null && !discountRateNode.isNull()) {
             return discountRateNode.asInt();
         } else {
-            System.out.println("Discount rate not found or is null");
+//            System.out.println("Discount rate not found or is null");
             return 0;
         }
     }
@@ -311,7 +309,7 @@ public class CrawlService {
         if (quantitySoldNode != null && !quantitySoldNode.isNull()) {
             return quantitySoldNode.get("value").asInt();
         } else {
-            System.out.println("Quantity sold not found or is null");
+//            System.out.println("Quantity sold not found or is null");
             return 0;
         }
     }

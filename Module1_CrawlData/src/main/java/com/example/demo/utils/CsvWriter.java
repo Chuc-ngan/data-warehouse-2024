@@ -22,7 +22,7 @@ public class CsvWriter {
             String[] header = {"Product ID", "SKU", "Product Name", "Price", "Original Price",
                     "Brand Name", "Discount", "Thumbnail URL", "Short Description",
                     "Images", "Colors", "Size", "Rating Average", "Review Count",
-                    "Discount Rate", "Quantity Sold", "URL Key", "URL Path", "Short URL", "Type"};
+                    "Discount Rate", "Quantity Sold", "URL Key", "URL Path", "Short URL", "Type", "CreateTime"};
             writer.writeNext(header);
 
             // Ghi thông tin sản phẩm
@@ -47,12 +47,13 @@ public class CsvWriter {
                         product.getUrlKey(),
                         product.getUrlPath(),
                         product.getShortUrl(),
-                        product.getType()
+                        product.getType(),
+                        String.valueOf(product.getCreateTime())
                 };
                 writer.writeNext(productData);
-                System.out.println("Dữ liệu đã được lưu vào file CSV: " + filePath);
-            }
 
+            }
+            System.out.println("Dữ liệu đã được lưu vào file CSV: " + filePath);
         } catch (IOException e) {
             e.printStackTrace();
         }
