@@ -15,9 +15,10 @@ public class EmailController {
     @Autowired
     private IEmailService emailService;
 
-    @PostMapping("/sendMail")
+    @PostMapping("/api/sendMail")
     public String
     sendMail(@RequestBody EmailDetails details) {
+
         String status = emailService.sendSimpleMail(details);
         return status;
     }
