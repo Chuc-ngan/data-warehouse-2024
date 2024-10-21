@@ -87,6 +87,13 @@ public class DemoApplication implements CommandLineRunner {
 			System.err.println("Config " + readyConfig.getId() + " không ở trạng thái sẵn sàng. Bỏ qua crawl.");
 			return; // Nếu không ở trạng thái sẵn sàng, dừng lại
 		}
+
+		// Cập nhật trạng thái thành "đang chạy" và ghi log
+		readyConfig.setStatus(Status.PROCESSING);
+		configService.updateConfig(readyConfig);
+		logService.logCrawlEvent(readyConfig.getId(), LogLevel.INFO, Status.PROCESSING,
+				"Bắt đầu crawl với config.", "", 0, 0);
+    
 		try {
 			System.out.println("Bắt đầu crawl với config: " + readyConfig.getId());
 			String currentDirectory = readyConfig.getDestinationPath();
