@@ -28,7 +28,7 @@ public class ConfigDataInitializer implements CommandLineRunner {
         config1.setFileType(FileType.CSV);
         config1.setFileEncoding("UTF-8");
         config1.setSourcePath("https://tiki.vn/api/v2/products/%s");
-        config1.setDestinationPath("D:\\workspace\\Project\\DataWarehouse\\data-warehouse-2024\\Module1_CrawlData");
+        config1.setDestinationPath("D:\\cc\\data-warehouse-2024\\Module1_CrawlData");
         config1.setBackupPath("data_temporary");
         config1.setDelimiter(",");
         config1.setColumns("id,sku,productName,shortDescription,price,originalPrice,discount,quantitySold,description,images,sizes,color,brandName,thumbnailUrl,discountRate,ratingAverage,reviewCount,urlKey,urlPath,shortUrl,type");

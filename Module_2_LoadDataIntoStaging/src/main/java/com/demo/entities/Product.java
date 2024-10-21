@@ -17,12 +17,12 @@ public class Product {
 	private String id;
 
 	private String sku;
-	private String productName;
-	private String shortDescription;
+	private String product_name;
+	private String short_description;
 	private double price;
-	private double originalPrice;
+	private double original_price;
 	private double discount;
-	private int quantitySold;
+	private int quantity_sold;
 	private String description;
 
 	@ElementCollection
@@ -34,15 +34,15 @@ public class Product {
 	@ElementCollection
 	private List<String> color;
 
-	private String brandName;
-	private String thumbnailUrl;
-	private int discountRate;
-	private double ratingAverage;
-	private int reviewCount;
-	private String urlKey;
-	private String urlPath;
-	private String shortUrl;
+	private String brand_name;
+	private String thumbnail_url;
+	private int discount_rate;
+	private double rating_average;
+	private int review_count;
+	private String url_key;
+	private String url_path;
+	private String short_url;
 	private String type;
 
-	private LocalDateTime createTime;
+	private LocalDateTime create_time;
 }
