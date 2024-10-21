@@ -103,7 +103,7 @@ public class DemoApplication implements CommandLineRunner {
 
 			List<String> productIds = csvReader.readProductIdsFromCsv(csvFilePath);
 			List<String> limitedProductIds = productIds.size() > readyConfig.getDataSize() ?
-					productIds.subList(0, readyConfig.getDataSize()) : productIds;
+					productIds.subList(5, readyConfig.getDataSize()) : productIds;
 
 			boolean crawlSuccess = false;
 			int retryAttempts = 0;

@@ -34,7 +34,7 @@ public class ConfigDataInitializer implements CommandLineRunner {
         config1.setColumns("id,sku,productName,shortDescription,price,originalPrice,discount,quantitySold,description,images,sizes,color,brandName,thumbnailUrl,discountRate,ratingAverage,reviewCount,urlKey,urlPath,shortUrl,type");
         config1.setTables("Product_Dim, Date_Dim");
         config1.setStatus(Status.READY_EXTRACT);
-        config1.setDataSize(5);
+        config1.setDataSize(10);
         config1.setCrawlFrequency(5);
         config1.setLastCrawlTime(null);
         config1.setTimeout(60);
