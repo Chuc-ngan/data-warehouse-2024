@@ -93,7 +93,7 @@ public class DemoApplication implements CommandLineRunner {
 		configService.updateConfig(readyConfig);
 		logService.logCrawlEvent(readyConfig.getId(), LogLevel.INFO, Status.PROCESSING,
 				"Bắt đầu crawl với config.", "", 0, 0);
-
+    
 		try {
 			System.out.println("Bắt đầu crawl với config: " + readyConfig.getId());
 			String currentDirectory = readyConfig.getDestinationPath();
