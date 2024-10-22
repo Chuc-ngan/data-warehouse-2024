@@ -56,7 +56,7 @@ public class DemoApplication implements CommandLineRunner {
 		if (runningConfigOptional.isPresent()) {
 			Config runningConfig = runningConfigOptional.get();
 			String message = "Có một config đang chạy: " + runningConfig.getId() + ". Không bắt đầu crawl.";
-			logService.logCrawlEvent(runningConfig.getId(), LogLevel.WARNING, Status.SUCCESS_EXTRACT, message, "", 0, 0);
+			logService.logCrawlEvent(runningConfig.getId(), LogLevel.WARNING, Status.PROCESSING, message, "", 0, 0);
 			emailService.sendFailureEmail(runningConfig.getNotificationEmails(), message);
 			return; // Dừng lại nếu có config đang chạy
 		}
