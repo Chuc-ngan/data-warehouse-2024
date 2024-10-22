@@ -56,7 +56,7 @@ public class DemoApplication implements CommandLineRunner {
 		if (runningConfigOptional.isPresent()) {
 			Config runningConfig = runningConfigOptional.get();
 			String message = "Có một config đang chạy: " + runningConfig.getId() + ". Không bắt đầu crawl.";
-			logService.logCrawlEvent(runningConfig.getId(), LogLevel.WARNING, Status.SUCCESS_EXTRACT, message, "", 0, 0);
+			logService.logCrawlEvent(runningConfig.getId(), LogLevel.WARNING, Status.PROCESSING, message, "", 0, 0);
 			emailService.sendFailureEmail(runningConfig.getNotificationEmails(), message);
 			return; // Dừng lại nếu có config đang chạy
 		}
@@ -124,13 +124,19 @@ public class DemoApplication implements CommandLineRunner {
 					CsvWriter csvWriter = new CsvWriter();
 					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
 					String timestamp = dateFormat.format(new Date());
+
+					String tempCsvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()
+							+ readyConfig.getFilePath() + FileSystems.getDefault().getSeparator()
+							+ "temp_" + readyConfig.getFileName() + "_" + timestamp + ".csv";
+					csvWriter.writeProductsToCsv(products, tempCsvFilePath);
+
 					outputCsvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()
 							+ readyConfig.getFilePath() + FileSystems.getDefault().getSeparator()
 							+ readyConfig.getFileName() + "_" + timestamp + ".csv";
 					csvWriter.writeProductsToCsv(products, outputCsvFilePath);
 
 					// Gửi email thông báo thành công
-					emailService.sendSuccessEmail(readyConfig.getNotificationEmails(), outputCsvFilePath, products.size());
+					emailService.sendSuccessEmail(readyConfig.getNotificationEmails(), outputCsvFilePath, products.size(), LocalDateTime.now());
 					System.out.println("Crawl thành công!");
 
 					crawlSuccess = true;

@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductServiceImpl implements ProductService{
-	
+
 	@Autowired
 	private ProductRepository productRepository;
 
@@ -27,9 +27,9 @@ public class ProductServiceImpl implements ProductService{
 	@Override
 	public void importCSV(String filePath) {
 		try (CSVReader csvReader = new CSVReader(new FileReader(filePath))) {
-            String[] values;
-            boolean isFirstLine = true;
-            try {
+			String[] values;
+			boolean isFirstLine = true;
+			try {
 				while ((values = csvReader.readNext()) != null) {
 					if(isFirstLine) {
 						isFirstLine = false;
@@ -57,7 +57,7 @@ public class ProductServiceImpl implements ProductService{
 					product.setShort_url(values[18]); // shortUrl
 					product.setType(values[19]); // type
 					product.setCreate_time(LocalDateTime.parse(values[20]));
-	                productRepository.save(product);
+					productRepository.save(product);
 
 				}
 			} catch (CsvValidationException e) {
@@ -67,10 +67,10 @@ public class ProductServiceImpl implements ProductService{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-		
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 }
