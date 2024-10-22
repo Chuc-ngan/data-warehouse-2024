@@ -27,7 +27,7 @@ public class LogService {
         log.setLogLevel(logLevel);
         log.setCount(count);
         log.setStackTrace(stackTrace);
-        log.setLocation("run");
+        log.setLocation("Crawl Data");
         log.setCreateTime(LocalDateTime.now());
         log.setErrorMessage(message);
         log.setStatus(status);

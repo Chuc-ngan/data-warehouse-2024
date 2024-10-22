@@ -15,7 +15,6 @@ import java.util.List;
 @Table(name = "config")
 public class Config {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     private String fileName;
@@ -35,14 +34,14 @@ public class Config {
 
     @Enumerated(EnumType.STRING)
     private Status status;  // Trạng thái của quá trình crawl
-//    private String STAGING_source_username; // Tên người dùng để truy cập nguồn dữ liệu
-//    private String STAGING_source_password; // Mật khẩu để truy cập nguồn dữ liệu
-//    private String STAGING_source_host; // Địa chỉ host của nguồn dữ liệu
-//    private int STAGING_source_port; // Cổng để kết nối tới nguồn dữ liệu
-//    private String DW_source_username; // Tên người dùng để truy cập nguồn dữ liệu
-//    private String DW_source_password; // Mật khẩu để truy cập nguồn dữ liệu
-//    private String DW_source_host; // Địa chỉ host của nguồn dữ liệu
-//    private int DW_source_port; // Cổng để kết nối tới nguồn dữ liệu
+    private String STAGING_source_username; // Tên người dùng để truy cập nguồn dữ liệu
+    private String STAGING_source_password; // Mật khẩu để truy cập nguồn dữ liệu
+    private String STAGING_source_host; // Địa chỉ host của nguồn dữ liệu
+    private int STAGING_source_port; // Cổng để kết nối tới nguồn dữ liệu
+    private String DW_source_username; // Tên người dùng để truy cập nguồn dữ liệu
+    private String DW_source_password; // Mật khẩu để truy cập nguồn dữ liệu
+    private String DW_source_host; // Địa chỉ host của nguồn dữ liệu
+    private int DW_source_port; // Cổng để kết nối tới nguồn dữ liệu
     private int dataSize;   // Kích thước của dữ liệu
     private int crawlFrequency;  // Tần suất crawl dữ liệu
     private int timeout;    // Thời gian timeout tối đa cho một phiên crawl

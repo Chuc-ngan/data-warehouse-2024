@@ -3,8 +3,10 @@ package com.example.demo.service.emailService;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import com.example.demo.model.EmailDetails;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -24,23 +26,71 @@ public class EmailServiceImpl implements IEmailService {
 
     @Value("${spring.mail.username}") private String sender;
 
-    public String sendSuccessEmail(String recipient, String outputCsvFilePath, int productCount) {
-        String subject = "Thông báo lưu dữ liệu thành công";
-        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
+    public void sendSuccessEmail(String notificationEmails, String csvFilePath, int productCount , LocalDateTime startTime) throws MessagingException {
+        // Tạo một đối tượng MimeMessage để gửi email với file đính kèm
+        MimeMessage mimeMessage = emailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
 
-        String body = "<html>" +
-                "<body>" +
-                "<h2 style='color:green;'>Dữ liệu sản phẩm đã được lưu thành công!</h2>" +
-                "<p style='font-size:16px;'>File lưu trữ: <strong>" + outputCsvFilePath + "</strong></p>" +
-                "<p style='font-size:16px;'>Thời gian crawl: <strong>" + currentTime + "</strong></p>" +
-                "<p style='font-size:16px;'>Số lượng sản phẩm đã lưu: <strong>" + productCount + "</strong></p>" +
-                "<p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>" +
-                "</body>" +
-                "</html>";
+        // Định dạng thời gian
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        String formattedStartTime = startTime.format(formatter);
 
-        EmailDetails details = new EmailDetails(recipient, body, subject, "");
-        return sendHtmlEmail(details);
+        try {
+            helper.setTo(notificationEmails);
+            helper.setSubject("Crawl thành công");
+
+            // Tạo nội dung email HTML
+            // Tạo nội dung email HTML
+            String body = "<html>" +
+                    "<body>" +
+                    "<h2 style='color:green;'>Crawl thành công!</h2>" +
+                    "<p>Chúng tôi đã lưu trữ dữ liệu sản phẩm thành công với các thông tin sau:</p>" +
+                    "<ul>" +
+                    "<li><strong>Số lượng sản phẩm:</strong> " + productCount + "</li>" +
+                    "<li><strong>File đính kèm:</strong> " + csvFilePath + "</li>" +
+                    "<li><strong>Thời điểm bắt đầu crawl:</strong> " + formattedStartTime + "</li>" + // Thêm thời điểm bắt đầu crawl
+                    "</ul>" +
+                    "<p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>" +
+                    "</body>" +
+                    "</html>";
+
+            helper.setText(body, true); // true để chỉ định rằng nội dung là HTML
+
+            // Đính kèm file CSV
+            FileSystemResource file = new FileSystemResource(csvFilePath);
+            helper.addAttachment(file.getFilename(), file);
+
+            // Gửi email
+            emailSender.send(mimeMessage);
+        } catch (MessagingException e) {
+            e.printStackTrace(); // Xử lý lỗi gửi email
+        }
     }
+//    // Trong EmailServiceImpl
+//    public void sendSuccessEmail(String notificationEmails, String csvFilePath, int productCount) throws MessagingException {
+//        SimpleMailMessage message = new SimpleMailMessage();
+//        message.setTo(notificationEmails);
+//        message.setSubject("Crawl thành công");
+//        message.setText("Số lượng sản phẩm: " + productCount + "\nVui lòng xem file đính kèm.");
+//
+//        // Tạo một đối tượng MimeMessage để gửi email với file đính kèm
+//        MimeMessage mimeMessage = emailSender.createMimeMessage();
+//        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+//
+//        try {
+//            helper.setTo(notificationEmails);
+//            helper.setSubject("Crawl thành công");
+//            helper.setText("Số lượng sản phẩm: " + productCount + "\nVui lòng xem file đính kèm.");
+//
+//            // Đính kèm file CSV
+//            FileSystemResource file = new FileSystemResource(csvFilePath);
+//            helper.addAttachment(file.getFilename(), file);
+//
+//            emailSender.send(mimeMessage);
+//        } catch (MessagingException e) {
+//            e.printStackTrace(); // Xử lý lỗi gửi email
+//        }
+//    }
 
     public String sendFailureEmail(String recipient, String errorMessage) {
         String subject = "Thông báo lỗi trong quá trình lưu dữ liệu";

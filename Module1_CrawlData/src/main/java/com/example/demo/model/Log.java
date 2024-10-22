@@ -32,7 +32,6 @@ public class Log {
     @Enumerated(EnumType.STRING) // Nếu Status là enum
     private Status status;  // Trạng thái của quá trình crawl
 
-    private int dataSize;  // Kích thước dữ liệu đã crawl
     private String createdBy;
     private LocalDateTime createTime;
 }

@@ -19,21 +19,30 @@ public class ConfigDataInitializer implements CommandLineRunner {
     public ConfigDataInitializer(ConfigService configService) {
         this.configService = configService;
     }
-
+    String currentDir = System.getProperty("user.dir");
     @Override
     public void run(String... args) throws Exception {
         Config config1 = new Config();
-        config1.setFileName("crawl_data_");
+        config1.setId(1);
+        config1.setFileName("crawl_data");
         config1.setFilePath("data");
         config1.setFileType(FileType.CSV);
         config1.setFileEncoding("UTF-8");
         config1.setSourcePath("https://tiki.vn/api/v2/products/%s");
-        config1.setDestinationPath("D:\\workspace\\Project\\DataWarehouse\\data-warehouse-2024\\Module1_CrawlData");
+        config1.setDestinationPath(currentDir);
         config1.setBackupPath("data_temporary");
         config1.setDelimiter(",");
         config1.setColumns("id,sku,productName,shortDescription,price,originalPrice,discount,quantitySold,description,images,sizes,color,brandName,thumbnailUrl,discountRate,ratingAverage,reviewCount,urlKey,urlPath,shortUrl,type");
         config1.setTables("Product_Dim, Date_Dim");
         config1.setStatus(Status.READY_EXTRACT);
+        config1.setSTAGING_source_username("root");
+        config1.setSTAGING_source_password("");
+        config1.setSTAGING_source_host("127.0.0.1");
+        config1.setSTAGING_source_port(3306);
+        config1.setDW_source_username("root");
+        config1.setDW_source_password("");
+        config1.setDW_source_host("127.0.0.1");
+        config1.setDW_source_port(3306);
         config1.setDataSize(10);
         config1.setCrawlFrequency(5);
         config1.setLastCrawlTime(null);
@@ -47,6 +56,7 @@ public class ConfigDataInitializer implements CommandLineRunner {
         config1.setCreatedBy("Admin");
         config1.setUpdatedBy("Admin");
         config1.setCreateTime(LocalDateTime.now());
+        config1.setUpdateTime(LocalDateTime.now());
 
         configService.save(config1);
     }
