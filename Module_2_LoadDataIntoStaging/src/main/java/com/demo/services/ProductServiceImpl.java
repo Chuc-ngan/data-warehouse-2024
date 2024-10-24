@@ -6,16 +6,14 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -25,9 +23,39 @@ public class ProductServiceImpl implements  ProductService {
 
     @Autowired
     private DatabaseService databaseService;
+    @Autowired
+    private JdbcTemplate jdbcTemplate; // Kết nối tới database control
 
     @Override
-    public void importCSV(String filePath, String databaseName) {
+    public void createTable(DataSource stagingDataSource) {
+        // 1. Lấy giá trị từ cột 'columns' trong bảng config của database 'control'
+        String sqlSelectColumns = "SELECT columns FROM config LIMIT 1";
+
+        String columnsString;
+        try {
+            columnsString = jdbcTemplate.queryForObject(sqlSelectColumns, String.class);
+            if (columnsString == null || columnsString.isEmpty()) {
+                System.out.println("Không tìm thấy giá trị trong cột 'columns'");
+                return;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        // 2. Tạo bảng trong database 'staging' với cấu trúc lấy từ 'control'
+        try (Connection connection = stagingDataSource.getConnection();
+             Statement createStmt = connection.createStatement()) {
+            String sqlCreateTable = "CREATE TABLE IF NOT EXISTS product (" + columnsString + ")";
+            createStmt.execute(sqlCreateTable);
+            System.out.println("Bảng 'product' đã được tạo thành công trong database 'staging'!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void importCSV(String filePath) {
         // Kết nối đến database dựa trên thông tin từ control
         DataSource dataSource = databaseService.connectToStagingDatabase();
 
@@ -51,38 +79,43 @@ public class ProductServiceImpl implements  ProductService {
             }
 
             // Câu lệnh tạo bảng nếu chưa tồn tại
-            String sqlCreateTable = "CREATE TABLE IF NOT EXISTS product (" +
-                    "id VARCHAR(250) PRIMARY KEY," +
-                    "sku VARCHAR(250)," +
-                    "name VARCHAR(250)," +
-                    "price FLOAT," +
-                    "original_price FLOAT," +
-                    "branch_name VARCHAR(250)," +
-                    "discount FLOAT," +
-                    "thumbnail_url TEXT," +
-                    "short_description TEXT," +
-                    "images TEXT," +
-                    "colors TEXT," +
-                    "sizes TEXT," +
-                    "rating_average DOUBLE," +
-                    "review_count INT," +
-                    "discount_rate DOUBLE," +
-                    "quantity_sold INT," +
-                    "url_key VARCHAR(250)," +
-                    "url_path TEXT," +
-                    "short_url TEXT," +
-                    "type VARCHAR(250)," +
-                    "date VARCHAR(250)" +
+//            String sqlCreateTable = "CREATE TABLE IF NOT EXISTS product (" +
+//                    "id VARCHAR(250) PRIMARY KEY," +
+//                    "sku VARCHAR(250)," +
+//                    "name VARCHAR(250)," +
+//                    "price FLOAT," +
+//                    "original_price FLOAT," +
+//                    "brand_name VARCHAR(250)," +
+//                    "discount FLOAT," +
+//                    "thumbnail_url TEXT," +
+//                    "short_description TEXT," +
+//                    "images TEXT," +
+//                    "colors TEXT," +
+//                    "sizes TEXT," +
+//                    "rating_average DOUBLE," +
+//                    "review_count INT," +
+//                    "discount_rate DOUBLE," +
+//                    "quantity_sold INT," +
+//                    "url_key VARCHAR(250)," +
+//                    "url_path TEXT," +
+//                    "short_url TEXT," +
+//                    "type VARCHAR(250)," +
+//                    "date VARCHAR(250)" +
+//
+//                    ")";
+//
+//            // Tạo bảng product nếu chưa tồn tại
+//            try (Statement stmt = connection.createStatement()) {
+//                stmt.execute(sqlCreateTable);
+//            }
 
-                    ")";
-
-            // Tạo bảng product nếu chưa tồn tại
-            try (Statement stmt = connection.createStatement()) {
-                stmt.execute(sqlCreateTable);
-            }
+            String sqlDropTable = "DROP TABLE IF EXISTS products";
+            jdbcTemplate.execute(sqlDropTable);
+            System.out.println("Bảng 'products' trong database 'control' đã được xóa!");
+            createTable(dataSource);
 
             // Câu lệnh insert dữ liệu vào bảng product
-            String sqlInsert = "INSERT INTO product (id, sku, name, price, original_price, branch_name, discount, thumbnail_url, " +
+            String sqlInsert = "INSERT INTO product (id, sku, name, price, original_price, brand_name, discount, thumbnail_url, " +
                     "short_description, images, colors, sizes, rating_average, review_count, discount_rate, " +
                     "quantity_sold, url_key, url_path, short_url, type, date) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -127,4 +160,6 @@ public class ProductServiceImpl implements  ProductService {
             e.printStackTrace(); // Xử lý lỗi
         }
     }
+
+
 }
