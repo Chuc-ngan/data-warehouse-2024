@@ -1,17 +1,11 @@
 package com.example.demo.utils;
 
-import com.example.demo.model.EmailDetails;
 import com.example.demo.model.Product;
-import com.example.demo.service.emailService.EmailServiceImpl;
-import com.example.demo.service.emailService.IEmailService;
 import com.opencsv.CSVWriter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Component
@@ -38,7 +32,7 @@ public class CsvWriter {
                         product.getThumbnailUrl(),
                         product.getShortDescription(),
                         String.join(";", product.getImages()),  // Nếu images là List<String>
-                        String.join(";", product.getColor()),   // Nếu colors là List<String>
+                        String.join(";", product.getColors()),   // Nếu colors là List<String>
                         String.join(";", product.getSizes()),    // Nếu sizes là List<String>
                         String.valueOf(product.getRatingAverage()),
                         String.valueOf(product.getReviewCount()),
