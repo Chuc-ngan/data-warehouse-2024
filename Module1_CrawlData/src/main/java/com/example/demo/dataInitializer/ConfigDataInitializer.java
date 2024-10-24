@@ -45,14 +45,14 @@ public class ConfigDataInitializer implements CommandLineRunner {
         config1.setDW_source_password("");
         config1.setDW_source_host("127.0.0.1");
         config1.setDW_source_port(3306);
-        config1.setDataSize(10);
+        config1.setDataSize(20);
         config1.setCrawlFrequency(5);
         config1.setLastCrawlTime(null);
         config1.setTimeout(60);
         config1.setRetryCount(3);
         config1.setActive(true);
         config1.setLastUpdated(LocalDateTime.now());
-        config1.setNotificationEmails("tuhoangnguyen2003@gmail.com");
+        config1.setNotificationEmails("ngannguyen16122003@gmail.com");
         config1.setNote("This is a sample config.");
         config1.setVersion("1.0");
         config1.setCreatedBy("Admin");
