@@ -56,7 +56,7 @@ public class ProductController {
 			Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
 			// Gọi service để import dữ liệu từ file
-			productService.importCSV(path.toString());
+			// productService.importCSV(path.toString());
 			return new ResponseEntity<>("Import successful!", HttpStatus.OK);
 		} catch (Exception e) {
 			e.printStackTrace(); // In ra lỗi để theo dõi

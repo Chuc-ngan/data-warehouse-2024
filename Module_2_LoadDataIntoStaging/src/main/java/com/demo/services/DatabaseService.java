@@ -1,6 +1,7 @@
 package com.demo.services;
-import com.demo.repository.ConfigRepository;
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Service;
 
@@ -11,19 +12,19 @@ import java.util.Map;
 public class DatabaseService {
 
     @Autowired
-    private ConfigRepository configRepository;
+    private JdbcTemplate jdbcTemplate;
 
     public DataSource connectToStagingDatabase() {
-        Map<String, Object> config = configRepository.getStagingConfig();
-        String url = "jdbc:mysql://" + config.get("staging_source_host") + "/" + config.get("staging_source_name");
-        String username = (String) config.get("staging_source_username");
-        String password = (String) config.get("staging_source_password");
+        String url = "jdbc:mysql://localhost:3306/" + "staging";
+        String username = "root";
+        String password = "";
 
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl(url);
+        // Tạo DataSource dựa trên thông tin lấy được
+        HikariDataSource dataSource = new HikariDataSource();
+        dataSource.setJdbcUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
 
         return dataSource;
     }
