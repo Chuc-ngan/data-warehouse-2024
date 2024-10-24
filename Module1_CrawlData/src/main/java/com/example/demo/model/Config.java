@@ -34,6 +34,7 @@ public class Config {
 
     @Enumerated(EnumType.STRING)
     private Status status;  // Trạng thái của quá trình crawl
+    private String STAGING_source_name;
     private String STAGING_source_username; // Tên người dùng để truy cập nguồn dữ liệu
     private String STAGING_source_password; // Mật khẩu để truy cập nguồn dữ liệu
     private String STAGING_source_host; // Địa chỉ host của nguồn dữ liệu

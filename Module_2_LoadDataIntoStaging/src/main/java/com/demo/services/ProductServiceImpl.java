@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 
+import com.demo.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +14,6 @@ import org.springframework.stereotype.Service;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import com.demo.entities.Product;
-import com.demo.repository.primary.ProductRepository;
-import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -23,7 +22,6 @@ public class ProductServiceImpl implements ProductService{
 	@Autowired
 	private ProductRepository productRepository;
 
-	@Transactional("primaryTransactionManager")
 	@Override
 	public void importCSV(String filePath) {
 		try (CSVReader csvReader = new CSVReader(new FileReader(filePath))) {
