@@ -81,7 +81,7 @@ public class CrawlService {
                     product.setImages(getImages(productDetailData));
 
                     // Lấy các màu của sản phẩm (nếu có)
-                    product.setColor(getColor(productDetailData));
+                    product.setColors(getColor(productDetailData));
 
                     //Lấy các size của sản phẩm
                     product.setSizes(getSizes(productDetailData));

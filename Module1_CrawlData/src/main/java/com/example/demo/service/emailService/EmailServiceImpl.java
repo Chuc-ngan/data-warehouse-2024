@@ -66,31 +66,6 @@ public class EmailServiceImpl implements IEmailService {
             e.printStackTrace(); // Xử lý lỗi gửi email
         }
     }
-//    // Trong EmailServiceImpl
-//    public void sendSuccessEmail(String notificationEmails, String csvFilePath, int productCount) throws MessagingException {
-//        SimpleMailMessage message = new SimpleMailMessage();
-//        message.setTo(notificationEmails);
-//        message.setSubject("Crawl thành công");
-//        message.setText("Số lượng sản phẩm: " + productCount + "\nVui lòng xem file đính kèm.");
-//
-//        // Tạo một đối tượng MimeMessage để gửi email với file đính kèm
-//        MimeMessage mimeMessage = emailSender.createMimeMessage();
-//        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-//
-//        try {
-//            helper.setTo(notificationEmails);
-//            helper.setSubject("Crawl thành công");
-//            helper.setText("Số lượng sản phẩm: " + productCount + "\nVui lòng xem file đính kèm.");
-//
-//            // Đính kèm file CSV
-//            FileSystemResource file = new FileSystemResource(csvFilePath);
-//            helper.addAttachment(file.getFilename(), file);
-//
-//            emailSender.send(mimeMessage);
-//        } catch (MessagingException e) {
-//            e.printStackTrace(); // Xử lý lỗi gửi email
-//        }
-//    }
 
     public String sendFailureEmail(String recipient, String errorMessage) {
         String subject = "Thông báo lỗi trong quá trình lưu dữ liệu";
