@@ -52,7 +52,7 @@ public class ConfigDataInitializer implements CommandLineRunner {
         config1.setRetryCount(3);
         config1.setActive(true);
         config1.setLastUpdated(LocalDateTime.now());
-        config1.setNotificationEmails("ngannguyen16122003@gmail.com");
+        config1.setNotificationEmails("tuhoangnguyen2003@gmail.com");
         config1.setNote("This is a sample config.");
         config1.setVersion("1.0");
         config1.setCreatedBy("Admin");

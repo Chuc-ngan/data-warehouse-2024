@@ -25,14 +25,14 @@ public class Product {
 	private int quantity_sold;
 	private String description;
 
-	@ElementCollection
-	private List<String> images;
 
-	@ElementCollection
-	private List<String> sizes;
+	private String images;
 
-	@ElementCollection
-	private List<String> color;
+
+	private String sizes;
+
+
+	private String color;
 
 	private String brand_name;
 	private String thumbnail_url;
