@@ -113,12 +113,12 @@ public class DemoApplication implements CommandLineRunner {
 			List<String> limitedProductIds;
 			int dataSize = readyConfig.getDataSize();
 
-			// Nếu danh sách có hơn 5 sản phẩm, trộn và lấy 5 sản phẩm ngẫu nhiên.
-			if (productIds.size() > readyConfig.getDataSize()) {
-				Collections.shuffle(productIds);
-				limitedProductIds = productIds.subList(0, Math.min(5, dataSize));
+			// Nếu danh sách có nhiều hơn số lượng được cấu hình, trộn và lấy số sản phẩm theo dataSize từ readyConfig.
+			if (productIds.size() > dataSize) {
+				Collections.shuffle(productIds); // Trộn danh sách sản phẩm ngẫu nhiên
+				limitedProductIds = productIds.subList(0, dataSize); // Lấy số lượng sản phẩm dựa trên dataSize
 			} else {
-				limitedProductIds = productIds;
+				limitedProductIds = productIds; // Nếu danh sách có ít hơn hoặc bằng dataSize, lấy toàn bộ danh sách
 			}
 
 			boolean crawlSuccess = false;

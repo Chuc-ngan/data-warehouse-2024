@@ -81,7 +81,7 @@ public class CrawlService {
                     product.setImages(getImages(productDetailData));
 
                     // Lấy các màu của sản phẩm (nếu có)
-                    product.setColors(getColor(productDetailData));
+                    product.setColors(getColors(productDetailData));
 
                     //Lấy các size của sản phẩm
                     product.setSizes(getSizes(productDetailData));
@@ -223,27 +223,28 @@ public class CrawlService {
         return imageUrls;
     }
 
-    private List<String> getColor(JsonNode productDetailData) {
+    // Hàm lấy danh sách màu sắc
+    private List<String> getColors(JsonNode productDetailData) {
         List<String> colors = new ArrayList<>();
         JsonNode configurableOptions = productDetailData.get("configurable_options");
 
         if (configurableOptions != null && configurableOptions.isArray()) {
             for (JsonNode option : configurableOptions) {
-                if (option.get("code").asText().equals("option1")) { // Giả sử "option1" là mã cho màu
+                // So sánh cả code và name để xác định thuộc tính Màu
+                if ("option1".equalsIgnoreCase(option.get("code").asText()) && "Màu".equalsIgnoreCase(option.get("name").asText())) {
                     if (option.has("values") && option.get("values").isArray()) {
                         for (JsonNode value : option.get("values")) {
-                            if (value.has("label")) {
-                                colors.add(value.get("label").asText());
+                            String color = value.get("label").asText();
+                            // Chuẩn hóa và thêm màu vào danh sách
+                            String[] splitColors = color.split("[;,]");
+                            for (String c : splitColors) {
+                                colors.add(c.trim().toLowerCase()); // Loại bỏ khoảng trắng và chuyển thành chữ thường
                             }
                         }
                     }
-                    break; // Dừng lại khi đã tìm thấy màu
                 }
             }
-        } else {
-//            System.out.println("Colors not found or is not an array");
         }
-
         return colors;
     }
 
@@ -253,23 +254,24 @@ public class CrawlService {
 
         if (configurableOptions != null && configurableOptions.isArray()) {
             for (JsonNode option : configurableOptions) {
-                if (option.get("code").asText().equals("option2")) { // Giả sử "option2" là mã cho kích cỡ
+                // So sánh cả code và name để xác định thuộc tính Kích cỡ
+                if ("option2".equalsIgnoreCase(option.get("code").asText()) && "Kích cỡ".equalsIgnoreCase(option.get("name").asText())) {
                     if (option.has("values") && option.get("values").isArray()) {
                         for (JsonNode value : option.get("values")) {
-                            if (value.has("label")) {
-                                sizes.add(value.get("label").asText());
+                            String size = value.get("label").asText();
+                            // Chuẩn hóa và thêm kích cỡ vào danh sách
+                            String[] splitSizes = size.split("[;,]");
+                            for (String s : splitSizes) {
+                                sizes.add(s.trim()); // Loại bỏ khoảng trắng
                             }
                         }
                     }
-                    break;
                 }
             }
-        } else {
-//            System.out.println("Sizes not found or is not an array");
         }
-
         return sizes;
     }
+
 
     private double getRatingAverage(JsonNode productDetailData) {
         JsonNode ratingAverageNode = productDetailData.get("rating_average");
