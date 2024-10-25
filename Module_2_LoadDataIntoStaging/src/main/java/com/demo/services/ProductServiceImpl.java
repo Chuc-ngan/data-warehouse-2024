@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
@@ -55,9 +56,63 @@ public class ProductServiceImpl implements  ProductService {
     }
 
     @Override
-    public void importCSV(String filePath) {
+    public void checkOldData() {
+        // Kết nối đến database 'staging'
+        DataSource stagingDataSource = databaseService.connectToStagingDatabase();
+
+        // Lấy ngày hiện tại
+        LocalDateTime today = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String todayString = today.format(formatter);
+
+        // Truy vấn để kiểm tra xem có bản ghi nào với ngày hôm nay không
+        String sqlCheckDate = "SELECT COUNT(*) FROM product WHERE DATE_FORMAT(STR_TO_DATE(date, '%d/%m/%Y'), '%d/%m/%Y') = ?";
+
+        try (Connection connection = stagingDataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sqlCheckDate)) {
+
+            pstmt.setString(1, todayString);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                if (count == 0) {
+                    // Nếu không có bản ghi nào với ngày hôm nay, xóa toàn bộ dữ liệu
+                    System.out.println("Không có dữ liệu của ngày hôm nay. Đang thực hiện TRUNCATE bảng 'product'...");
+                    String sqlTruncateTable = "TRUNCATE TABLE product";
+                    try (Statement stmt = connection.createStatement()) {
+                        stmt.execute(sqlTruncateTable);
+                        System.out.println("Bảng 'product' đã được xóa dữ liệu thành công!");
+                    }
+                } else {
+                    System.out.println("Có dữ liệu của ngày hôm nay. Không cần xóa dữ liệu.");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace(); // Xử lý lỗi
+        }
+    }
+
+    @Override
+    public void importCSV() {
+        // Lấy đường dẫn file từ bảng config trong database control
+        String filePath = getFilePathFromConfig();
+        if (filePath == null) {
+            System.out.println("Không thể lấy đường dẫn file từ bảng config.");
+            return;
+        }
+
+        // Kiểm tra điều kiện từ bảng log trong database control
+        if (!checkLogStatusAndDate()) {
+            System.out.println("Không tìm thấy bản ghi log phù hợp. Dừng quy trình nhập CSV.");
+            return;
+        }
+
         // Kết nối đến database dựa trên thông tin từ control
         DataSource dataSource = databaseService.connectToStagingDatabase();
+
+
 
         // Cấu hình parser để xử lý dấu phẩy và dấu ngoặc kép
         CSVParser parser = new CSVParserBuilder()
@@ -114,6 +169,10 @@ public class ProductServiceImpl implements  ProductService {
             System.out.println("Bảng 'products' trong database 'control' đã được xóa!");
             createTable(dataSource);
 
+            // Gọi phương thức checkOldDate để check dữ liệu trong db staging có phải dữ liệu cũ không
+            checkOldData();
+            System.out.println("Dữ liệu cũ đã được xóa đi");
+
             // Câu lệnh insert dữ liệu vào bảng product
             String sqlInsert = "INSERT INTO product (id, sku, name, price, original_price, brand_name, discount, thumbnail_url, " +
                     "short_description, images, colors, sizes, rating_average, review_count, discount_rate, " +
@@ -161,5 +220,40 @@ public class ProductServiceImpl implements  ProductService {
         }
     }
 
+
+    // Phương thức lấy đường dẫn file từ bảng config
+    private String getFilePathFromConfig() {
+        String sql = "SELECT destination_path, file_name FROM config LIMIT 1";
+        try {
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                String destinationPath = rs.getString("destination_path");
+                String fileName = rs.getString("file_name");
+                String fullPath = destinationPath + "\\" + "data\\" + fileName + ".csv";
+                // Chuyển đổi dấu phân tách thành dấu tương thích với hệ điều hành
+                fullPath =  fullPath.replace("\\", "\\\\");
+                System.out.println("Đường dẫn đầy đủ: " + fullPath); // Debug đường dẫn
+                return fullPath;
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Phương thức kiểm tra log trong database 'control'
+    private boolean checkLogStatusAndDate() {
+        // Truy vấn kiểm tra log mới nhất với status là 'SUCCESS_EXTRACT' và date là ngày hiện tại
+        String sqlCheckLog = "SELECT COUNT(*) FROM logs " +
+                "WHERE status = ? AND DATE_FORMAT(create_time, '%Y-%m-%d') = CURDATE() " +
+                "ORDER BY id DESC LIMIT 1";
+
+        try {
+            int count = jdbcTemplate.queryForObject(sqlCheckLog, new Object[]{"SUCCESS_EXTRACT"}, Integer.class);
+            return count > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 }

@@ -154,7 +154,7 @@ public class DemoApplication implements CommandLineRunner {
 
 					// Ghi vào file tạm
 					String tempCsvFilePath = tempDirPath + FileSystems.getDefault().getSeparator()
-							+ "temp_" + readyConfig.getFileName() + "_" + timestamp + ".csv";
+							+ "temp_" + "crawl_data" + "_" + timestamp + ".csv";
 
 					csvWriter.writeProductsToCsv(products, tempCsvFilePath);
 
@@ -178,14 +178,15 @@ public class DemoApplication implements CommandLineRunner {
 						// Nếu hợp lệ, chuyển file tạm thành file chính
 						outputCsvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()
 								+ readyConfig.getFilePath() + FileSystems.getDefault().getSeparator()
-								+ readyConfig.getFileName() + "_" + timestamp + ".csv";
+								+ "crawl_data" + "_" + timestamp + ".csv";
 
 						Files.move(tempFilePath, Paths.get(outputCsvFilePath), StandardCopyOption.REPLACE_EXISTING);
 
 						System.out.println("File tạm đã chuyển thành file chính: " + outputCsvFilePath);
 						emailService.sendSuccessEmail(readyConfig.getNotificationEmails(), outputCsvFilePath, products.size(), LocalDateTime.now());
 						System.out.println("Crawl thành công!");
-
+						readyConfig.setFileName("crawl_data" + "_" + timestamp);
+						configService.updateConfig(readyConfig);
 						crawlSuccess = true;
 					}
 					 else {

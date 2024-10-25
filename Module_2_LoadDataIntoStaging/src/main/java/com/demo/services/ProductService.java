@@ -5,8 +5,13 @@ import java.sql.Connection;
 
 public interface ProductService {
 
-	public void importCSV(String filePath);
+	// load csv vào database staging
+	public void importCSV();
 
+	// tạo bảng
 	public void createTable(DataSource dataSource);
+
+	// check db trong staging là dữ liệu cũ hay mới
+	public void checkOldData();
 	
 }
