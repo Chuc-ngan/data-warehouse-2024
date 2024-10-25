@@ -15,7 +15,7 @@ public class CsvWriter {
             // Ghi tiêu đề
             String[] header = {"Product ID", "SKU", "Product Name", "Price", "Original Price",
                     "Brand Name", "Discount", "Thumbnail URL", "Short Description",
-                    "Images", "Colors","Size",  "Rating Average", "Review Count",
+                    "Images", "Colors", "Size", "Rating Average", "Review Count",
                     "Discount Rate", "Quantity Sold", "URL Key", "URL Path", "Short URL", "Type", "CreateTime"};
             writer.writeNext(header);
 
