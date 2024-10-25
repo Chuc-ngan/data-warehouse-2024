@@ -22,7 +22,7 @@ public class Log {
 
     @Enumerated(EnumType.STRING) // Nếu LogLevel là enum
     private LogLevel logLevel;
-
+    private String destinationPath;   // Đường dẫn đích đến
     private int count;
     private String location;
     private long time;

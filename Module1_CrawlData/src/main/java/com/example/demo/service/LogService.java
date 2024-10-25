@@ -21,10 +21,11 @@ public class LogService {
     }
 
     // Phương thức ghi log cho sự kiện crawl
-    public void logCrawlEvent(int idConfig, LogLevel logLevel, Status status, String message, String stackTrace, int count, long time) {
+    public void logCrawlEvent(int idConfig, LogLevel logLevel, String destinationPath, Status status, String message, String stackTrace, int count, long time) {
         Log log = new Log();
         log.setIdConfig(idConfig);
         log.setLogLevel(logLevel);
+        log.setDestinationPath(destinationPath);
         log.setCount(count);
         log.setStackTrace(stackTrace);
         log.setLocation("Crawl Data");
