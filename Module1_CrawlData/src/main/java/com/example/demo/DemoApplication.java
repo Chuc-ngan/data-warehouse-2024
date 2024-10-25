@@ -99,7 +99,7 @@ public class DemoApplication implements CommandLineRunner {
 		// Cập nhật trạng thái thành "đang chạy" và ghi log
 		readyConfig.setStatus(Status.PROCESSING);
 		configService.updateConfig(readyConfig);
-		logService.logCrawlEvent(readyConfig.getId(), LogLevel.INFO, "Không có", Status.PROCESSING,
+		logService.logCrawlEvent(readyConfig.getId(), LogLevel.INFO,"Không có", Status.PROCESSING,
 				"Bắt đầu crawl với config.", "", 0, 0);
 
 		try {
@@ -113,12 +113,12 @@ public class DemoApplication implements CommandLineRunner {
 			List<String> limitedProductIds;
 			int dataSize = readyConfig.getDataSize();
 
-			// Nếu danh sách có hơn 5 sản phẩm, trộn và lấy 5 sản phẩm ngẫu nhiên.
-			if (productIds.size() > readyConfig.getDataSize()) {
-				Collections.shuffle(productIds);
-				limitedProductIds = productIds.subList(0, Math.min(5, dataSize));
+			// Nếu danh sách có nhiều hơn số lượng được cấu hình, trộn và lấy số sản phẩm theo dataSize từ readyConfig.
+			if (productIds.size() > dataSize) {
+				Collections.shuffle(productIds); // Trộn danh sách sản phẩm ngẫu nhiên
+				limitedProductIds = productIds.subList(0, dataSize); // Lấy số lượng sản phẩm dựa trên dataSize
 			} else {
-				limitedProductIds = productIds;
+				limitedProductIds = productIds; // Nếu danh sách có ít hơn hoặc bằng dataSize, lấy toàn bộ danh sách
 			}
 
 			boolean crawlSuccess = false;
@@ -154,7 +154,7 @@ public class DemoApplication implements CommandLineRunner {
 
 					// Ghi vào file tạm
 					String tempCsvFilePath = tempDirPath + FileSystems.getDefault().getSeparator()
-							+ "temp_" + "crawl_data" + "_" + timestamp + ".csv";
+							+ "temp_" + readyConfig.getFileName() + "_" + timestamp + ".csv";
 
 					csvWriter.writeProductsToCsv(products, tempCsvFilePath);
 
@@ -169,7 +169,7 @@ public class DemoApplication implements CommandLineRunner {
 								product.validate();
 							} catch (IllegalArgumentException e) {
 								System.err.println("Sản phẩm không hợp lệ: " + e.getMessage());
-								logService.logCrawlEvent(readyConfig.getId(), LogLevel.ERROR, "Không có", Status.FAILURE_EXTRACT,
+								logService.logCrawlEvent(readyConfig.getId(), LogLevel.ERROR,"Không có", Status.FAILURE_EXTRACT,
 										"Sản phẩm không hợp lệ: " + product.getId() + " - " + e.getMessage(), "", 1, 0);
 								return; // Dừng lại nếu có sản phẩm không hợp lệ
 							}
@@ -178,15 +178,14 @@ public class DemoApplication implements CommandLineRunner {
 						// Nếu hợp lệ, chuyển file tạm thành file chính
 						outputCsvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()
 								+ readyConfig.getFilePath() + FileSystems.getDefault().getSeparator()
-								+ "crawl_data" + "_" + timestamp + ".csv";
+								+ readyConfig.getFileName() + "_" + timestamp + ".csv";
 
 						Files.move(tempFilePath, Paths.get(outputCsvFilePath), StandardCopyOption.REPLACE_EXISTING);
 
 						System.out.println("File tạm đã chuyển thành file chính: " + outputCsvFilePath);
 						emailService.sendSuccessEmail(readyConfig.getNotificationEmails(), outputCsvFilePath, products.size(), LocalDateTime.now());
 						System.out.println("Crawl thành công!");
-						readyConfig.setFileName("crawl_data" + "_" + timestamp);
-						configService.updateConfig(readyConfig);
+
 						crawlSuccess = true;
 					}
 					else {
