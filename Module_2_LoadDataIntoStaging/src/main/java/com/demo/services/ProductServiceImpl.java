@@ -223,16 +223,14 @@ public class ProductServiceImpl implements  ProductService {
 
     // Phương thức lấy đường dẫn file từ bảng config
     private String getFilePathFromConfig() {
-        String sql = "SELECT destination_path, file_name FROM config LIMIT 1";
+        String sql = "SELECT destination_path FROM logs order by id desc LIMIT 1";
         try {
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
                 String destinationPath = rs.getString("destination_path");
-                String fileName = rs.getString("file_name");
-                String fullPath = destinationPath + "\\" + "data\\" + fileName + ".csv";
                 // Chuyển đổi dấu phân tách thành dấu tương thích với hệ điều hành
-                fullPath =  fullPath.replace("\\", "\\\\");
-                System.out.println("Đường dẫn đầy đủ: " + fullPath); // Debug đường dẫn
-                return fullPath;
+                destinationPath =  destinationPath.replace("\\", "\\\\");
+                System.out.println("Đường dẫn đầy đủ: " + destinationPath); // Debug đường dẫn
+                return destinationPath;
             });
         } catch (Exception e) {
             e.printStackTrace();
