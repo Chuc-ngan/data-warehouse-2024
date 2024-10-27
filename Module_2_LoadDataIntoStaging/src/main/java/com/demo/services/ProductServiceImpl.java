@@ -6,6 +6,7 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,12 @@ public class ProductServiceImpl implements  ProductService {
     private DatabaseService databaseService;
     @Autowired
     private JdbcTemplate jdbcTemplate; // Kết nối tới database control
+
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private Environment environment;
 
     @Override
     public void createTable(DataSource stagingDataSource) {
@@ -96,16 +103,20 @@ public class ProductServiceImpl implements  ProductService {
 
     @Override
     public void importCSV() {
+
+        boolean isSuccess = false;
         // Lấy đường dẫn file từ bảng config trong database control
         String filePath = getFilePathFromConfig();
         if (filePath == null) {
             System.out.println("Không thể lấy đường dẫn file từ bảng config.");
+            insertLog(isSuccess, filePath);
             return;
         }
 
         // Kiểm tra điều kiện từ bảng log trong database control
         if (!checkLogStatusAndDate()) {
             System.out.println("Không tìm thấy bản ghi log phù hợp. Dừng quy trình nhập CSV.");
+            insertLog(isSuccess, filePath);
             return;
         }
 
@@ -119,6 +130,7 @@ public class ProductServiceImpl implements  ProductService {
                 .withSeparator(',')
                 .withQuoteChar('"')
                 .build();
+
 
         try (CSVReader csvReader = new CSVReaderBuilder(new FileReader(filePath))
                 .withCSVParser(parser)
@@ -213,11 +225,25 @@ public class ProductServiceImpl implements  ProductService {
 
                 // Thực thi batch insert
                 pstmt.executeBatch();
+                isSuccess = true;
+                String from = environment.getProperty("spring.mail.username");
+                String body = "<html>" +
+                        "<body>" +
+                        "<h2 style='color:green;'>Load file csv thành công!</h2>" +
+                        "<p>Chúng tôi đã lưu trữ dữ liệu sản phẩm thành công vào database staging</p>" +
+
+                        "<p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>" +
+                        "</body>" +
+                        "</html>";
+                mailService.send(from, "tuhoangnguyen2003@gmail.com", "Load data vào staging thành công",body);
             }
 
         } catch (IOException | CsvException | SQLException e) {
             e.printStackTrace(); // Xử lý lỗi
+            isSuccess = false;
         }
+
+        insertLog(isSuccess,filePath);
     }
 
 
@@ -252,6 +278,23 @@ public class ProductServiceImpl implements  ProductService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    // Ghi log vào db control
+    private void insertLog(boolean isSuccess, String filePath) {
+        String sqlInsertLog = "INSERT INTO logs (count, id_config, create_time, time, created_by, destination_path, error_message, location, stack_trace, log_level, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String status = isSuccess ? "SUCCESS_EXTRACT" : "FAILED";
+        int count = isSuccess ? 1 : 0;
+        int id_config = 1;
+        int time = 0;
+        String createdBy = "Admin";
+        String errorMessage = isSuccess ? "Crawl hoàn thành" : "Lỗi khi tải dữ liệu";
+        String location = "Crawl Data";
+        String stackTrace = isSuccess ? "INFO" : "ERROR";
+        String logLevel = "INFO";
+
+        jdbcTemplate.update(sqlInsertLog, count, id_config, Timestamp.valueOf(LocalDateTime.now()), time, createdBy, filePath, errorMessage, location, stackTrace, logLevel, status);
     }
 
 }
