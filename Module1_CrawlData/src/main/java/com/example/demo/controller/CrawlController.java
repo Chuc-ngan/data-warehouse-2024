@@ -23,8 +23,8 @@ public class CrawlController {
     }
 
     @GetMapping("/products")
-    public List<Product> crawlProducts( List<String> productIds) throws InterruptedException, JsonProcessingException {
-        return crawlService.crawlProducts(productIds);
+    public List<Product> crawlProducts( List<String> productIds, String url) throws InterruptedException, JsonProcessingException {
+        return crawlService.crawlProducts(productIds, "https://tiki.vn/api/v2/products");
     }
 
 }

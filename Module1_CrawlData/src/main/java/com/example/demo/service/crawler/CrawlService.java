@@ -25,11 +25,11 @@ public class CrawlService {
 
     private final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.3; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0";
 
-    public List<Product> crawlProducts(List<String> productIds) throws InterruptedException, JsonProcessingException {
+    public List<Product> crawlProducts(List<String> productIds,String baseUrl) throws InterruptedException, JsonProcessingException {
         List<Product> result = new ArrayList<>();
 
         for (String pid : productIds) {
-            String url = String.format("https://tiki.vn/api/v2/products/%s", pid);
+            String url = String.format(baseUrl + "/%s", pid);
             HttpHeaders headers = new HttpHeaders();
             headers.set("User-Agent", USER_AGENT);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
@@ -53,13 +53,9 @@ public class CrawlService {
                 product.setDiscount(getDiscount(productData));
                 product.setShortDescription(getShortDescription(productData));
                 product.setBrandName(getBrandName(productData));
-
                 product.setShortUrl(getShortUrl(productData));
-
                 product.setUrlKey(getUrlKey(productData));
-
                 product.setUrlPath(getUrlPath(productData));
-
                 product.setType(getType(productData));
                 // Lấy thông tin chi tiết về sản phẩm
                 String detailsUrl = String.format("https://tiki.vn/api/v2/products/%s?platform=web", pid);
@@ -71,28 +67,19 @@ public class CrawlService {
                     // Lấy các thông số kỹ thuật (specifications)
                     JsonNode specifications = productDetailData.get("specifications");
                     if (specifications != null && !specifications.isNull()) {
-
                     } else {
                         System.out.println("Specifications not found or is null");
                     }
-
-
                     // Lấy các hình ảnh của sản phẩm
                     product.setImages(getImages(productDetailData));
-
                     // Lấy các màu của sản phẩm (nếu có)
-                    product.setColors(getColor(productDetailData));
-
+                    product.setColors(getColors(productDetailData));
                     //Lấy các size của sản phẩm
                     product.setSizes(getSizes(productDetailData));
-
                     //Lấy ra trung bình đánh giá sao
                     product.setRatingAverage(getRatingAverage(productDetailData));
-
                     product.setDiscountRate(getDiscountRate(productDetailData));
-
                     product.setReviewCount(getReviewCount(productDetailData));
-
                     product.setQuantitySold(getQuantitySold(productDetailData));
                     product.setCreateTime(LocalDateTime.now());
                 }
@@ -223,27 +210,28 @@ public class CrawlService {
         return imageUrls;
     }
 
-    private List<String> getColor(JsonNode productDetailData) {
+    // Hàm lấy danh sách màu sắc
+    private List<String> getColors(JsonNode productDetailData) {
         List<String> colors = new ArrayList<>();
         JsonNode configurableOptions = productDetailData.get("configurable_options");
 
         if (configurableOptions != null && configurableOptions.isArray()) {
             for (JsonNode option : configurableOptions) {
-                if (option.get("code").asText().equals("option1")) { // Giả sử "option1" là mã cho màu
+                // So sánh cả code và name để xác định thuộc tính Màu
+                if ("option1".equalsIgnoreCase(option.get("code").asText()) && "Màu".equalsIgnoreCase(option.get("name").asText())) {
                     if (option.has("values") && option.get("values").isArray()) {
                         for (JsonNode value : option.get("values")) {
-                            if (value.has("label")) {
-                                colors.add(value.get("label").asText());
+                            String color = value.get("label").asText();
+                            // Chuẩn hóa và thêm màu vào danh sách
+                            String[] splitColors = color.split("[;,]");
+                            for (String c : splitColors) {
+                                colors.add(c.trim().toLowerCase()); // Loại bỏ khoảng trắng và chuyển thành chữ thường
                             }
                         }
                     }
-                    break; // Dừng lại khi đã tìm thấy màu
                 }
             }
-        } else {
-//            System.out.println("Colors not found or is not an array");
         }
-
         return colors;
     }
 
@@ -253,23 +241,24 @@ public class CrawlService {
 
         if (configurableOptions != null && configurableOptions.isArray()) {
             for (JsonNode option : configurableOptions) {
-                if (option.get("code").asText().equals("option2")) { // Giả sử "option2" là mã cho kích cỡ
+                // So sánh cả code và name để xác định thuộc tính Kích cỡ
+                if ("option2".equalsIgnoreCase(option.get("code").asText()) && "Kích cỡ".equalsIgnoreCase(option.get("name").asText())) {
                     if (option.has("values") && option.get("values").isArray()) {
                         for (JsonNode value : option.get("values")) {
-                            if (value.has("label")) {
-                                sizes.add(value.get("label").asText());
+                            String size = value.get("label").asText();
+                            // Chuẩn hóa và thêm kích cỡ vào danh sách
+                            String[] splitSizes = size.split("[;,]");
+                            for (String s : splitSizes) {
+                                sizes.add(s.trim()); // Loại bỏ khoảng trắng
                             }
                         }
                     }
-                    break;
                 }
             }
-        } else {
-//            System.out.println("Sizes not found or is not an array");
         }
-
         return sizes;
     }
+
 
     private double getRatingAverage(JsonNode productDetailData) {
         JsonNode ratingAverageNode = productDetailData.get("rating_average");
