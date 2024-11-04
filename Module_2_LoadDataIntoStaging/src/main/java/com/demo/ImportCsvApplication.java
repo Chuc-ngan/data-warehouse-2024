@@ -17,21 +17,12 @@ public class ImportCsvApplication {
 		ProductService productService = context.getBean(ProductService.class);
 
 		// Đường dẫn đến file CSV và tên database cần import (tùy theo cấu hình của bạn)
-		String filePath = "D:\\dw\\data-warehouse-2024\\Module1_CrawlData\\data\\crawl_data_20241024_145402.csv"; // Thay đường dẫn file CSV thực tế
-
-
+		String filePath = "D:\\workspace\\Project\\DataWarehouse\\data-warehouse-2024\\Module1_CrawlData\\data\\crawl_data_20241024_145402.csv"; // Thay đường dẫn file CSV thực tế
 
 		try {
-
-
-
-
 				// Gọi phương thức importCsvToDatabase để thực hiện import dữ liệu
 				productService.importCSV();
 				System.out.println("Import thành công!");
-
-
-
 
 		} catch (Exception e) {
 			e.printStackTrace();

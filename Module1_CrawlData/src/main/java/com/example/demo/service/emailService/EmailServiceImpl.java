@@ -68,7 +68,7 @@ public class EmailServiceImpl implements IEmailService {
     }
 
     public String sendFailureEmail(String recipient, String errorMessage) {
-        String subject = "Thông báo lỗi trong quá trình lưu dữ liệu";
+        String subject = "Thông báo lỗi trong quá trình crawl dữ liệu";
         String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"));
 
         String body = "<html>" +

@@ -22,18 +22,21 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class DemoApplication implements CommandLineRunner {
 
 	@Autowired
 	private CrawlService crawlService;
-
 	private final EmailServiceImpl emailService;
 	private final ConfigService configService;
 	private final LogService logService;
+
 	@Autowired
 	private ExecutorService executorService;
+
 	@Autowired
 	public DemoApplication(EmailServiceImpl emailService, ConfigService configService, LogService logService) {
 		this.emailService = emailService;
@@ -48,29 +51,28 @@ public class DemoApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		CsvReader csvReader = new CsvReader();
-		List<Config> configs = configService.getAllConfigs();
 
-		Optional<Config> runningConfigOptional = configService.getConfigRunning();
+		if (checkAndNotifyRunningConfigs()) return;
 
-		// Nếu có config đang chạy, gửi email thông báo và dừng lại
-		if (runningConfigOptional.isPresent()) {
-			Config runningConfig = runningConfigOptional.get();
-			String message = "Có một config đang chạy: " + runningConfig.getId() + ". Không bắt đầu crawl.";
-			logService.logCrawlEvent(runningConfig.getId(), LogLevel.WARNING,"Không có", Status.PROCESSING, message, "", 0, 0);
-			emailService.sendFailureEmail(runningConfig.getNotificationEmails(), message);
-			return; // Dừng lại nếu có config đang chạy
+		// Lấy danh sách cấu hình đang hoạt động
+		List<Config> readyConfigs = logService.getReadyStatusesToday(); // Lấy các config có trạng thái READY_EXTRACT
+
+		if (readyConfigs.isEmpty()) {
+			System.out.println("Không có cấu hình nào ở trạng thái READY_EXTRACT.");
+			return; // Không có config nào để chạy
 		}
-
 		List<Future<?>> futures = new ArrayList<>();
 
-		configs.stream()
-				.filter(Config::isActive) // Chỉ chọn config đang hoạt động
-				.forEach(config -> {
-					Future<?> future = executorService.submit(() -> {
-						runCrawlForConfig(config, csvReader);
-					});
-					futures.add(future);
-				});
+		// Lấy danh sách cấu hình đang hoạt động
+		List<Config> activeConfigs = configService.getActiveConfigs();
+
+		// Chạy crawl cho từng cấu hình đang hoạt động
+		for (Config config : activeConfigs) {
+			Future<?> future = executorService.submit(() -> {
+				runCrawlForConfig(config, csvReader);
+			});
+			futures.add(future);
+		}
 
 		// Chờ cho tất cả các công việc hoàn thành
 		for (Future<?> future : futures) {
@@ -90,137 +92,197 @@ public class DemoApplication implements CommandLineRunner {
 		}
 	}
 
+	private boolean checkAndNotifyRunningConfigs() {
+		boolean isRunning = logService.isConfigRunning();
+
+		if (isRunning) {
+			// Lấy danh sách các Config có trạng thái 'PROCESSING' trong ngày hôm nay
+			List<Config> runningConfigs = logService.getProcessingStatusesToday();
+			System.out.println("Running configs count: " + runningConfigs.size());
+			if (!runningConfigs.isEmpty()) {
+				String ids = runningConfigs.stream()
+						.map(Config::getId)
+						.map(String::valueOf)
+						.collect(Collectors.joining(", "));
+				String message = "Có các config đang chạy: " + ids + ". Không bắt đầu crawl.";
+				System.out.println(message);
+				// Log và gửi email thông báo
+				runningConfigs.forEach(config -> {
+					emailService.sendFailureEmail(config.getNotificationEmails(), message);
+				});
+
+				return true; // Có config đang chạy, dừng lại
+			}
+		}
+		System.out.println("Không có config nào đang chạy");
+		return false;
+	}
+
+	private List<String> getLimitedProductIds(Config readyConfig, CsvReader csvReader) {
+		String currentDirectory = readyConfig.getFilePath();
+		String csvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()
+				+ readyConfig.getDestinationPath() + FileSystems.getDefault().getSeparator()
+				+ "products_id.csv";
+		List<String> productIds = csvReader.readProductIdsFromCsv(csvFilePath);
+		List<String> limitedProductIds;
+		int dataSize = readyConfig.getDataSize();
+
+		// Nếu danh sách có nhiều hơn số lượng được cấu hình, trộn và lấy số sản phẩm theo dataSize từ readyConfig.
+		if (productIds.size() > dataSize) {
+			Collections.shuffle(productIds); // Trộn danh sách sản phẩm ngẫu nhiên
+			limitedProductIds = productIds.subList(0, dataSize); // Lấy số lượng sản phẩm dựa trên dataSize
+		} else {
+			limitedProductIds = productIds; // Nếu danh sách có ít hơn hoặc bằng dataSize, lấy toàn bộ danh sách
+		}
+
+		return limitedProductIds;
+	}
+
 	private void runCrawlForConfig(Config readyConfig, CsvReader csvReader) {
-		if (!readyConfig.getStatus().equals(Status.READY_EXTRACT)) {
-			System.err.println("Config " + readyConfig.getId() + " không ở trạng thái sẵn sàng. Bỏ qua crawl.");
-			return; // Nếu không ở trạng thái sẵn sàng, dừng lại
+		// Kiểm tra nếu cấu hình là null
+		if (readyConfig == null) {
+			System.err.println("Cấu hình không hợp lệ. Bỏ qua crawl.");
+			return; // Nếu cấu hình không hợp lệ, dừng lại
 		}
 
-		// Cập nhật trạng thái thành "đang chạy" và ghi log
-		readyConfig.setStatus(Status.PROCESSING);
-		configService.updateConfig(readyConfig);
-		logService.logCrawlEvent(readyConfig.getId(), LogLevel.INFO,"Không có", Status.PROCESSING,
-				"Bắt đầu crawl với config.", "", 0, 0);
+		Log log = logService.getConfigLogByStatusToday(readyConfig.getId());
+		if (log != null) {
+			System.out.println("Cấu hình " + readyConfig.getId() + " đã sẵn sàng để crawl.");
+			log.setStatus(Status.PROCESSING);
+			log.setUpdateTime(LocalDateTime.now());
+			logService.updateLog(log);
 
-		try {
-			System.out.println("Bắt đầu crawl với config: " + readyConfig.getId());
-			String currentDirectory = readyConfig.getDestinationPath();
-			String csvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()
-					+ readyConfig.getFilePath() + FileSystems.getDefault().getSeparator()
-					+ "products_id.csv";
-
-			List<String> productIds = csvReader.readProductIdsFromCsv(csvFilePath);
-			List<String> limitedProductIds;
-			int dataSize = readyConfig.getDataSize();
-
-			// Nếu danh sách có nhiều hơn số lượng được cấu hình, trộn và lấy số sản phẩm theo dataSize từ readyConfig.
-			if (productIds.size() > dataSize) {
-				Collections.shuffle(productIds); // Trộn danh sách sản phẩm ngẫu nhiên
-				limitedProductIds = productIds.subList(0, dataSize); // Lấy số lượng sản phẩm dựa trên dataSize
-			} else {
-				limitedProductIds = productIds; // Nếu danh sách có ít hơn hoặc bằng dataSize, lấy toàn bộ danh sách
+			List<String> limitedProductIds = getLimitedProductIds(readyConfig, csvReader);
+			boolean crawlSuccess = executeCrawl(readyConfig, limitedProductIds, log);
+			if (!crawlSuccess) {
+				// Xử lý lỗi khi crawl thất bại
+				handleCrawlFailure(readyConfig);
 			}
 
-			boolean crawlSuccess = false;
-			int retryAttempts = 0;
-			List<Product> products = List.of();
-			String outputCsvFilePath = "";
+		} else {
+			String message = "Config " + readyConfig.getId() + " không ở trạng thái READY_EXTRACT. Bỏ qua crawl.";
+			// Gửi email thông báo
+			emailService.sendFailureEmail(readyConfig.getNotificationEmails(), message);
+		}
 
-			// Bắt đầu tính toán thời gian crawl
-			long startTime = System.currentTimeMillis();
+	}
 
-			while (!crawlSuccess && retryAttempts < readyConfig.getRetryCount()) {
-				try {
-					products = crawlService.crawlProducts(limitedProductIds);
-					readyConfig.setLastCrawlTime(LocalDateTime.now());
-					readyConfig.setStatus(Status.SUCCESS_EXTRACT);
-					configService.updateConfig(readyConfig);
+	private void handleCrawlFailure(Config readyConfig) {
 
-					// Ghi kết quả vào tệp CSV
-					CsvWriter csvWriter = new CsvWriter();
-					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
-					String timestamp = dateFormat.format(new Date());
+	}
 
-					String tempDirPath = currentDirectory + FileSystems.getDefault().getSeparator()
-							+ readyConfig.getFilePath() + "_temporary";
+	private boolean executeCrawl(Config readyConfig, List<String> limitedProductIds, Log log) {
+		boolean crawlSuccess = false;
+		int retryAttempts = 0;
 
-					Path tempDir = Paths.get(tempDirPath);
+		// Bắt đầu tính toán thời gian crawl
+		long startTime = System.currentTimeMillis();
 
-					// Kiểm tra nếu thư mục tạm chưa tồn tại thì tạo mới
-					if (!Files.exists(tempDir)) {
-						Files.createDirectories(tempDir);
-						System.out.println("Thư mục tạm đã được tạo: " + tempDirPath);
-					}
+		while (!crawlSuccess && retryAttempts < readyConfig.getRetryCount()) {
+			try {
+				// Gọi dịch vụ crawl để lấy sản phẩm
+				System.out.println("Đang tiến hành crawl...");
+				List<Product> products = crawlService.crawlProducts(limitedProductIds, readyConfig.getSourcePath());
 
-					// Ghi vào file tạm
-					String tempCsvFilePath = tempDirPath + FileSystems.getDefault().getSeparator()
-							+ "temp_" + readyConfig.getFileName() + "_" + timestamp + ".csv";
+				// Ghi kết quả vào tệp CSV
+				CsvWriter csvWriter = new CsvWriter();
+				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+				String timestamp = dateFormat.format(new Date());
+				String currentDirectory = readyConfig.getFilePath();
+				String tempDirPath = currentDirectory + FileSystems.getDefault().getSeparator()
+							+ readyConfig.getBackupPath();
 
-					csvWriter.writeProductsToCsv(products, tempCsvFilePath);
+				Path tempDir = Paths.get(tempDirPath);
 
-					// Kiểm tra xem file tạm có tồn tại và hợp lệ không
-					Path tempFilePath = Paths.get(tempCsvFilePath);
-					if (Files.exists(tempFilePath)) {
-						System.out.println("Tệp tạm tạo thành công: " + tempCsvFilePath);
-
-						// Kiểm tra tính hợp lệ của các sản phẩm
-						for (Product product : products) {
-							try {
-								product.validate();
-							} catch (IllegalArgumentException e) {
-								System.err.println("Sản phẩm không hợp lệ: " + e.getMessage());
-								logService.logCrawlEvent(readyConfig.getId(), LogLevel.ERROR,"Không có", Status.FAILURE_EXTRACT,
-										"Sản phẩm không hợp lệ: " + product.getId() + " - " + e.getMessage(), "", 1, 0);
-								return; // Dừng lại nếu có sản phẩm không hợp lệ
-							}
-						}
-
-						// Nếu hợp lệ, chuyển file tạm thành file chính
-						outputCsvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()
-								+ readyConfig.getFilePath() + FileSystems.getDefault().getSeparator()
-								+ readyConfig.getFileName() + "_" + timestamp + ".csv";
-
-						Files.move(tempFilePath, Paths.get(outputCsvFilePath), StandardCopyOption.REPLACE_EXISTING);
-
-						System.out.println("File tạm đã chuyển thành file chính: " + outputCsvFilePath);
-						emailService.sendSuccessEmail(readyConfig.getNotificationEmails(), outputCsvFilePath, products.size(), LocalDateTime.now());
-						System.out.println("Crawl thành công!");
-
-						crawlSuccess = true;
-					}
-					else {
-						retryAttempts++;
-						System.err.println("Không thể tìm thấy file tạm: " + tempCsvFilePath);
-					}
-				} catch (Exception e) {
-					retryAttempts++;
-					String message = "Có lỗi xảy ra khi crawl config " + readyConfig.getId() + ": " + e.getMessage() +
-							" (Thử lại lần " + retryAttempts + ")";
-					handleError(readyConfig, message, e);
+				// Kiểm tra nếu thư mục tạm chưa tồn tại thì tạo mới
+				if (!Files.exists(tempDir)) {
+					Files.createDirectories(tempDir);
+					System.out.println("Thư mục tạm đã được tạo: " + tempDirPath);
 				}
+
+				// Ghi vào file tạm
+				String tempCsvFilePath = tempDirPath + FileSystems.getDefault().getSeparator()
+						+ "temp_" + readyConfig.getFileName() + "_" + timestamp + ".csv";
+
+				csvWriter.writeProductsToCsv(products, tempCsvFilePath);
+
+				// Kiểm tra xem file tạm có tồn tại và hợp lệ không
+				Path tempFilePath = Paths.get(tempCsvFilePath);
+				if (Files.exists(tempFilePath)) {
+					System.out.println("Tệp tạm tạo thành công: " + tempCsvFilePath);
+
+					// Nếu hợp lệ, chuyển file tạm thành file chính
+					String outputCsvFilePath = currentDirectory + FileSystems.getDefault().getSeparator()
+							+ readyConfig.getDestinationPath() + FileSystems.getDefault().getSeparator()
+							+ readyConfig.getFileName() + "_" + timestamp + ".csv";
+
+					Files.move(tempFilePath, Paths.get(outputCsvFilePath), StandardCopyOption.REPLACE_EXISTING);
+
+					System.out.println("File tạm đã chuyển thành file chính: " + outputCsvFilePath);
+					// Ghi log thông báo crawl thành công
+					long endTime = System.currentTimeMillis();
+					long duration = endTime - startTime;
+					String successMessage = "Crawl thành công cho cấu hình " + readyConfig.getId() + " trong " + duration + " ms.";
+					log.setErrorMessage(successMessage);
+					log.setDestinationPath(outputCsvFilePath);
+					log.setCount(products.size());
+					log.setUpdateTime(LocalDateTime.now());
+					log.setStatus(Status.SUCCESS_EXTRACT);
+					logService.updateLog(log);
+
+					emailService.sendSuccessEmail(readyConfig.getNotificationEmails(), outputCsvFilePath, products.size(), LocalDateTime.now());
+					System.out.println("Crawl thành công!");
+					crawlSuccess = true;
+				}
+				else {
+					retryAttempts++;
+					System.err.println("Không thể tìm thấy file tạm: " + tempCsvFilePath);
+				}
+
+			} catch (InterruptedException e) {
+//				Xử lý lỗi InterruptedException
+				String errorMessage = "Crawl bị gián đoạn: " + e.getMessage();
+				System.err.println(errorMessage);
+				handleError(readyConfig, log, errorMessage, e);
+				break; // Dừng lại nếu bị gián đoạn
+
+			} catch (JsonProcessingException e) {
+				// Xử lý lỗi JsonProcessingException
+				String errorMessage = "Lỗi trong quá trình xử lý JSON: " + e.getMessage();
+				System.err.println(errorMessage);
+				handleError(readyConfig, log, errorMessage, e);
+
+			} catch (Exception e) {
+				// Xử lý các lỗi khác
+				String errorMessage = "Có lỗi xảy ra khi crawl: " + e.getMessage();
+				System.err.println(errorMessage);
+				handleError(readyConfig, log, errorMessage, e);
 			}
 
-			if (crawlSuccess) {
-				long endTime = System.currentTimeMillis();
-				long duration = endTime - startTime;
-				logService.logCrawlEvent(readyConfig.getId(), LogLevel.INFO, outputCsvFilePath, Status.SUCCESS_EXTRACT,
-						"Crawl hoàn thành trong " + duration + " ms", "", products.size(), 0);
-			} else {
-				String message = "Crawl không thành công sau " + retryAttempts + " lần thử.";
-				handleError(readyConfig, message, new Exception("Crawl không thành công"));
+			// Tăng số lần thử
+			retryAttempts++;
+
+			// Có thể thêm thời gian chờ ở đây giữa các lần thử
+			try {
+				Thread.sleep(readyConfig.getCrawlFrequency() * 60 * 1000);  // Chờ 2 giây trước khi thử lại
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt(); // Khôi phục trạng thái gián đoạn
 			}
-		} catch (Exception e) {
-			handleError(readyConfig, "Lỗi không xác định khi chạy crawl với config " + readyConfig.getId(), e);
 		}
+
+		return crawlSuccess;
 	}
 
 	// Phương thức xử lý lỗi để giảm thiểu trùng lặp mã
-	private void handleError(Config readyConfig, String message, Exception e) {
-		readyConfig.setStatus(Status.FAILURE_EXTRACT);
-		configService.updateConfig(readyConfig);
+	private void handleError(Config readyConfig, Log log, String message, Exception e) {
 		String stackTrace = Arrays.toString(e.getStackTrace());
+		log.setLogLevel(LogLevel.ERROR);
+		log.setStackTrace(stackTrace);
+		log.setStatus(Status.FAILURE_EXTRACT);
+		log.setErrorMessage(message);
+		log.setUpdateTime(LocalDateTime.now());
+		logService.updateLog(log);
 		emailService.sendFailureEmail(readyConfig.getNotificationEmails(), message);
-		logService.logCrawlEvent(readyConfig.getId(), LogLevel.ERROR,"Không có", Status.FAILURE_EXTRACT, message, stackTrace, 1, 0);
 		System.err.println(message);
 	}
 }
