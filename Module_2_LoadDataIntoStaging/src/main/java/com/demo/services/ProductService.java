@@ -6,7 +6,7 @@ import java.sql.Connection;
 public interface ProductService {
 
 	// load csv vào database staging
-	public void importCSV();
+	public void importCSV(String id);
 
 	// tạo bảng
 	public void createTable(DataSource dataSource);
