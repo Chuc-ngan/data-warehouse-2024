@@ -65,7 +65,7 @@ public class ProductServiceImpl implements  ProductService {
     @Override
     public void checkOldData() {
         // Kết nối đến database 'staging'
-        DataSource stagingDataSource = databaseService.connectToStagingDatabase();
+        DataSource stagingDataSource = databaseService.connectToStagingDatabase("1");
 
         // Lấy ngày hiện tại
         LocalDateTime today = LocalDateTime.now();
@@ -102,7 +102,7 @@ public class ProductServiceImpl implements  ProductService {
     }
 
     @Override
-    public void importCSV() {
+    public void importCSV(String id) {
 
         boolean isSuccess = false;
         // Lấy đường dẫn file từ bảng config trong database control
@@ -121,7 +121,7 @@ public class ProductServiceImpl implements  ProductService {
         }
 
         // Kết nối đến database dựa trên thông tin từ control
-        DataSource dataSource = databaseService.connectToStagingDatabase();
+        DataSource dataSource = databaseService.connectToStagingDatabase(id);
 
 
 

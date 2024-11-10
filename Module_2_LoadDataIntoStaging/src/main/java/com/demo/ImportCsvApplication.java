@@ -1,5 +1,7 @@
 package com.demo;
 
+import com.demo.services.LoadFileCSV;
+import com.demo.services.LogService;
 import com.demo.services.ProductService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,12 +18,16 @@ public class ImportCsvApplication {
 		// Lấy ProductService từ Spring context
 		ProductService productService = context.getBean(ProductService.class);
 
+		LogService logService = context.getBean(LogService.class);
+
+		LoadFileCSV loadFileCSV = context.getBean(LoadFileCSV.class);
+
 		// Đường dẫn đến file CSV và tên database cần import (tùy theo cấu hình của bạn)
-		String filePath = "D:\\workspace\\Project\\DataWarehouse\\data-warehouse-2024\\Module1_CrawlData\\data\\crawl_data_20241024_145402.csv"; // Thay đường dẫn file CSV thực tế
 
 		try {
 				// Gọi phương thức importCsvToDatabase để thực hiện import dữ liệu
-				productService.importCSV();
+//				productService.importCSV("19");
+				loadFileCSV.loadCSVToStaging("1");
 				System.out.println("Import thành công!");
 
 		} catch (Exception e) {

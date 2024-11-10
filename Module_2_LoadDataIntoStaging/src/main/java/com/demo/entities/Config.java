@@ -1,4 +1,4 @@
-package com.example.demo.model;
+package com.demo.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,7 +26,7 @@ public class Config {
     private String sourcePath;  // Đường dẫn nguồn của dữ liệu
     private String destinationPath;   // Đường dẫn đích đến
     private String backupPath;  // Đường dẫn lưu trữ bản sao dự phòng
-    private String delimiter;
+    private String delimiter;  // Dấu phân cách trong file (ví dụ: , ; \t)
     private String columns;  // Danh sách các cột của dữ liệu cần được crawl
     private String tables;  // Danh sách các bảng trong cơ sở dữ liệu
 
