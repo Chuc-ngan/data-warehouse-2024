@@ -33,4 +33,18 @@ public class Log {
     private Status status;  // Trạng thái của quá trình crawl
     private String createdBy;
     private LocalDateTime createTime;
+
+    public Log(int idConfig, LogLevel logLevel, String destinationPath, int count, String location, LocalDateTime updateTime, String errorMessage, String stackTrace, Status status, String createdBy, LocalDateTime createTime) {
+        this.idConfig = idConfig;
+        this.logLevel = logLevel;
+        this.destinationPath = destinationPath;
+        this.count = count;
+        this.location = location;
+        this.updateTime = updateTime;
+        this.errorMessage = errorMessage;
+        this.stackTrace = stackTrace;
+        this.status = status;
+        this.createdBy = createdBy;
+        this.createTime = createTime;
+    }
 }
