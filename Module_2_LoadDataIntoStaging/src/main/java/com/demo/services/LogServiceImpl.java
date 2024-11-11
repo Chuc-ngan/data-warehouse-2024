@@ -24,4 +24,9 @@ public class LogServiceImpl implements LogService {
 
         return log.getDestinationPath();
     }
+
+    @Override
+    public void insertLog(Log log) {
+        logRepository.save(log);
+    }
 }
