@@ -13,5 +13,7 @@ public interface ProductService {
 
 	// check db trong staging là dữ liệu cũ hay mới
 	public void checkOldData();
+
+	public void createTables(DataSource stagingDataSource);
 	
 }

@@ -1,5 +1,6 @@
 package com.demo;
 
+import com.demo.services.DatabaseService;
 import com.demo.services.LoadFileCSV;
 import com.demo.services.LogService;
 import com.demo.services.ProductService;
@@ -20,6 +21,8 @@ public class ImportCsvApplication {
 
 		LogService logService = context.getBean(LogService.class);
 
+		DatabaseService databaseService = context.getBean(DatabaseService.class);
+
 		LoadFileCSV loadFileCSV = context.getBean(LoadFileCSV.class);
 
 		// Đường dẫn đến file CSV và tên database cần import (tùy theo cấu hình của bạn)
@@ -27,8 +30,8 @@ public class ImportCsvApplication {
 		try {
 				// Gọi phương thức importCsvToDatabase để thực hiện import dữ liệu
 //				productService.importCSV("19");
-				loadFileCSV.loadCSVToStaging("1");
-				System.out.println("Import thành công!");
+				loadFileCSV.loadCSVToStaging();
+
 
 		} catch (Exception e) {
 			e.printStackTrace();

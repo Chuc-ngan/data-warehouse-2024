@@ -18,7 +18,11 @@ import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements  ProductService {
@@ -296,5 +300,64 @@ public class ProductServiceImpl implements  ProductService {
 
         jdbcTemplate.update(sqlInsertLog, count, id_config, Timestamp.valueOf(LocalDateTime.now()), time, createdBy, filePath, errorMessage, location, stackTrace, logLevel, status);
     }
+
+    @Override
+    public void createTables(DataSource stagingDataSource) {
+        // 1. Lấy danh sách cấu hình từ bảng config trong database 'control'
+        String sqlSelectConfigs = "SELECT tables, columns FROM config";
+
+        List<Map<String, String>> configs;
+        try {
+            configs = jdbcTemplate.query(sqlSelectConfigs, (rs, rowNum) -> {
+                Map<String, String> map = new HashMap<>();
+                map.put("tableName", rs.getString("tables"));
+                map.put("columns", rs.getString("columns"));
+                return map;
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Không thể truy vấn dữ liệu từ bảng config.");
+            return;
+        }
+
+        if (configs == null || configs.isEmpty()) {
+            System.out.println("Không tìm thấy dữ liệu trong bảng config.");
+            return;
+        }
+
+        // 2. Kết nối với database 'staging' và tạo bảng
+        try (Connection connection = stagingDataSource.getConnection()) {
+            for (Map<String, String> config : configs) {
+                String tableName = config.get("tableName");
+                String columns = config.get("columns");
+
+                if (tableName == null || tableName.isEmpty() || columns == null || columns.isEmpty()) {
+                    System.out.println("Cấu hình bảng không hợp lệ. Bỏ qua.");
+                    continue;
+                }
+
+                // Xử lý columns: gán tất cả các cột kiểu TEXT
+                String[] columnNames = columns.split(",");
+                String columnsWithText = Arrays.stream(columnNames)
+                        .map(column -> column.trim() + " TEXT") // Gán kiểu TEXT cho tất cả các cột
+                        .collect(Collectors.joining(", "));
+
+                String sqlCreateTable = "CREATE TABLE IF NOT EXISTS " + tableName + " (" + columnsWithText + ")";
+                System.out.println("Executing SQL: " + sqlCreateTable); // Debug SQL statement
+                try (Statement createStmt = connection.createStatement()) {
+                    createStmt.execute(sqlCreateTable);
+                    System.out.println("Bảng '" + tableName + "' đã được tạo thành công trong database 'staging'!");
+                } catch (SQLException e) {
+                    System.out.println("Không thể tạo bảng '" + tableName + "'. Lỗi:");
+                    e.printStackTrace();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Lỗi kết nối với database 'staging'.");
+        }
+    }
+
+
 
 }
