@@ -171,13 +171,18 @@ public class LoadFileCSV {
 
     public void loadCSVToStaging() {
         LocalDateTime currentTime = LocalDateTime.now();
+<<<<<<< HEAD
         String procedureCall = "CALL get_load_config_data_mul()";
+=======
+        String procedureCall = "CALL get_load_config_data_multiple()";
+>>>>>>> e91568f16d12a9d7a9bc43eb775060ed9384783e
 
         try {
             // Lấy danh sách kết quả từ stored procedure
             List<Map<String, Object>> resultList = jdbcTemplate.queryForList(procedureCall);
 
             if (resultList.isEmpty()) {
+<<<<<<< HEAD
                 String from = environment.getProperty("spring.mail.username");
                 String body = "<html>" +
                         "<body>" +
@@ -188,6 +193,9 @@ public class LoadFileCSV {
                 mailService.send(from, "tuhoangnguyen2003@gmail.com",
                         "Load data vào stagng thất bại", body);
 //                System.out.println("Không có dữ liệu nào để load data vào staging.");
+=======
+                System.out.println("Không có dữ liệu nào trong bảng config và logs.");
+>>>>>>> e91568f16d12a9d7a9bc43eb775060ed9384783e
                 return;
             }
 
@@ -200,7 +208,10 @@ public class LoadFileCSV {
                     .filter(Objects::nonNull) // Bỏ qua các giá trị NULL
                     .collect(Collectors.toSet()); // Chuyển thành tập hợp để tránh trùng lặp
 
+<<<<<<< HEAD
             System.out.println(validIdConfigs);
+=======
+>>>>>>> e91568f16d12a9d7a9bc43eb775060ed9384783e
 
             for (String configId : validIdConfigs) {
                 boolean hasValidData = false;
@@ -265,7 +276,11 @@ public class LoadFileCSV {
                         String from = environment.getProperty("spring.mail.username");
                         String body = "<html>" +
                                 "<body>" +
+<<<<<<< HEAD
                                 "<h2 style='color:green;'>Load dữ liệu vào staging thành công!</h2>" +
+=======
+                                "<h2 style='color:green;'>Load file CSV thành công!</h2>" +
+>>>>>>> e91568f16d12a9d7a9bc43eb775060ed9384783e
                                 "<p>File: " + filePath + "</p>" +
                                 "<p>Bảng: " + tableStaging + "</p>" +
                                 "<p>Dữ liệu đã được tải thành công vào bảng staging của configId " + configId + ".</p>" +
@@ -323,6 +338,7 @@ public class LoadFileCSV {
                 }
 
                 if (!hasValidData) {
+<<<<<<< HEAD
                     String from = environment.getProperty("spring.mail.username");
                     String body = "<html>" +
                             "<body>" +
@@ -345,6 +361,13 @@ public class LoadFileCSV {
                     "</html>";
             mailService.send(from, "tuhoangnguyen2003@gmail.com",
                     "Load data vào stagng thất bại", body);
+=======
+                    System.out.println("Không có dữ liệu hợp lệ cho id_config: " + configId);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi không mong muốn: " + e.getMessage());
+>>>>>>> e91568f16d12a9d7a9bc43eb775060ed9384783e
             e.printStackTrace();
         }
     }
