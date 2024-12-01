@@ -11,7 +11,7 @@
  Target Server Version : 80030 (8.0.30)
  File Encoding         : 65001
 
- Date: 04/11/2024 22:06:12
+ Date: 09/11/2024 14:34:30
 */
 
 SET NAMES utf8mb4;
@@ -60,6 +60,7 @@ CREATE TABLE `config`  (
 -- Records of config
 -- ----------------------------
 INSERT INTO `config` VALUES (1, 'crawl_data', 'D:\\workspace\\Project\\data-warehouse-2024\\Module1_CrawlData', 'UTF-8', 5, 20, 3, 60, 3306, 3306, 'https://tiki.vn/api/v2/products', 'data', 'backup', 'CSV', ',', '127.0.0.1', '', 'root', '127.0.0.1', '', 'root', 'product_id,sku,product_name,price,original_price,brand_name,discount_value,thumbnail_url,short_description,image_urls,color_options,size_options,rating_average,review_count,discount_rate,quantity_sold,url_key,url_path,short_url,product_type,created_at', 'Product_Dim, Date_Dim', 'This is a sample config.', 'ngannguyen16122003@gmail.com', '2024-10-27 16:06:53.316175', '2024-11-04 20:08:15.747879', 'Admin', 'Admin', '1.0', b'1');
+INSERT INTO `config` VALUES (2, 'crawl_data', 'D:\\workspace\\Project\\data-warehouse-2024\\Module1_CrawlData', 'UTF-8', 5, 20, 3, 60, 3306, 3306, 'https://tiki.vn/api/v2/products', 'data', 'backup', 'CSV', ',', '127.0.0.1', '', 'root', '127.0.0.1', '', 'root', 'product_id,sku,product_name,price,original_price,brand_name,discount_value,thumbnail_url,short_description,image_urls,color_options,size_options,rating_average,review_count,discount_rate,quantity_sold,url_key,url_path,short_url,product_type,created_at', 'Product_Dim, Date_Dim', 'This is a sample config.', 'ngannguyen16122003@gmail.com', '2024-10-27 16:06:53.316175', '2024-10-27 16:06:53.325772', 'Admin', 'Admin', '1.0', b'1');
 
 -- ----------------------------
 -- Table structure for logs
@@ -70,7 +71,7 @@ CREATE TABLE `logs`  (
   `id_config` int NOT NULL,
   `count` int NOT NULL,
   `log_level` enum('DEBUG','ERROR','INFO','WARNING') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
-  `status` enum('ACTIVE','FAILURE_EXTRACT','PROCESSING','READY_EXTRACT','SUCCESS_EXTRACT') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `status` enum('FAILURE_EXTRACT','PROCESSING','READY_EXTRACT','SUCCESS_EXTRACT') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
   `create_time` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `update_time` datetime(6) NULL DEFAULT NULL,
   `created_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
@@ -81,11 +82,12 @@ CREATE TABLE `logs`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `id_config`(`id_config` ASC) USING BTREE,
   CONSTRAINT `logs_ibfk_1` FOREIGN KEY (`id_config`) REFERENCES `config` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB AUTO_INCREMENT = 16 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 19 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of logs
 -- ----------------------------
-INSERT INTO `logs` VALUES (15, 1, 20, 'INFO', 'PROCESSING', '2024-11-04 22:04:48.818031', '2024-11-04 22:04:48.814858', 'Admin', 'D:\\workspace\\Project\\data-warehouse-2024\\Module1_CrawlData\\data\\crawl_data_20241104_220448.csv', 'Crawl thành công cho cấu hình 1 trong 91729 ms.', 'Crawl Data', '');
+INSERT INTO `logs` VALUES (17, 1, 20, 'INFO', 'SUCCESS_EXTRACT', '2024-11-05 19:47:35.800328', '2024-11-05 19:47:35.797487', 'Admin', 'D:\\workspace\\Project\\data-warehouse-2024\\Module1_CrawlData\\data\\crawl_data_20241105_194735.csv', 'Crawl thành công cho cấu hình 1 trong 90860 ms.', 'Crawl data', NULL);
+INSERT INTO `logs` VALUES (18, 2, 20, 'INFO', 'SUCCESS_EXTRACT', '2024-11-05 19:47:36.079799', '2024-11-05 19:47:36.077021', 'Admin', 'D:\\workspace\\Project\\data-warehouse-2024\\Module1_CrawlData\\data\\crawl_data_20241105_194736.csv', 'Crawl thành công cho cấu hình 2 trong 91143 ms.', 'Crawl data', NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;
