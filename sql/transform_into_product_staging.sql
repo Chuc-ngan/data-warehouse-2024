@@ -1,5 +1,5 @@
 USE staging;
-DROP PROCEDURE if EXISTS transform_and_cleaning_data;
+DROP PROCEDURE IF EXISTS transform_and_cleaning_data;
 
 delimiter //
 CREATE PROCEDURE transform_and_cleaning_data() 
@@ -14,8 +14,13 @@ BEGIN
 	-- kiểm trang tình trạng lần crawl gần nhất trong bảng logs
 	SELECT COUNT(*) INTO record_count
 		FROM control.`logs` 
-		WHERE control.`logs`.`status`='FILE_PROCESS' AND 
-			DATE(control.`logs`.update_time)=CURDATE();
+		WHERE control.`logs`.`status`='SUCCESS_LOAD_DATA' 
+			AND DATE(control.`logs`.update_time)=CURDATE();
+	
+	SET @log_id=(SELECT l.id 
+						FROM control.`logs` l
+						WHERE l.`status`='SUCCESS_LOAD_DATA' 
+							AND DATE(l.update_time)=CURDATE());
 	
 	-- Nếu như không có record nào trong bảng kết quả
 	IF record_count = 0 THEN 
@@ -288,12 +293,17 @@ BEGIN
 				ps.id_date = @max_date_sk
 			-- Cập nhật các sản phẩm có thời gian mới hơn trong temp_product
 			WHERE tp.created_at > IFNULL(ps.created_at, '1970-01-01 00:00:00'); 
+		
 			
-		UPDATE log
+		UPDATE control.`logs`
+		SET `status` = 'SUCCESS_TRANSFORM' 
+		WHERE id = @log_id;
+		
 		-- Trả về kết quả từ bảng tạm temp_product để kiểm tra
 		SELECT * FROM staging_combined;
 			
 	END IF;
+	
 END //
 delimiter ;
 
