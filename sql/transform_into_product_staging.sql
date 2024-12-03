@@ -1,9 +1,12 @@
-USE staging;
+USE control;
 DROP PROCEDURE IF EXISTS transform_and_cleaning_data;
 
 delimiter //
 CREATE PROCEDURE transform_and_cleaning_data() 
 BEGIN
+
+	TRUNCATE TABLE product_staging;
+	
 	-- Khai báo biến record_count
 	DECLARE record_count INT;
 
@@ -13,12 +16,12 @@ BEGIN
 	
 	-- kiểm trang tình trạng lần crawl gần nhất trong bảng logs
 	SELECT COUNT(*) INTO record_count
-		FROM control.`logs` 
-		WHERE control.`logs`.`status`='SUCCESS_LOAD_DATA' 
-			AND DATE(control.`logs`.update_time)=CURDATE();
+		FROM `control`.`logs` 
+		WHERE `control`.`logs`.`status`='SUCCESS_LOAD_DATA' 
+			AND DATE(`control`.`logs`.update_time)=CURDATE();
 	
 	SET @log_id=(SELECT l.id 
-						FROM control.`logs` l
+						FROM `control`.`logs` l
 						WHERE l.`status`='SUCCESS_LOAD_DATA' 
 							AND DATE(l.update_time)=CURDATE());
 	
@@ -173,7 +176,7 @@ BEGIN
 			
 			-- Lọc created_at (nếu NULL, trả về ngày hiện tại)
 			IFNULL(created_at, NOW()) AS created_at
-		FROM staging_tiki;
+		FROM staging.staging_tiki;
 	
 		CREATE TEMPORARY TABLE temp_product AS
 		SELECT 
@@ -199,31 +202,31 @@ BEGIN
 			sc.product_type,
 			sc.created_at
 		FROM 
-			staging.staging_combined AS sc
+			staging_combined AS sc
 
 			-- Nếu sku chưa tồn tại trong product_staging
 			WHERE (sc.sku NOT IN (
 								SELECT ps.sku 
-								FROM product_staging ps)) 
+								FROM staging.product_staging ps)) 
 			-- Hoặc là nếu bản ghi có thời gian hiện tại mới hơn bản ghi đã có
 					OR (sc.created_at >= ALL (
 						SELECT created_at
-						FROM product_staging ps 
+						FROM staging.product_staging ps 
 						WHERE sc.sku=ps.sku));
 											
 		-- kiểm tra ngày hôm nay có tồn tại trong bảng date_dim không
 		SET @date_exits = (SELECT COUNT(*) 
-								FROM date_dim dd
+								FROM staging.date_dim dd
 								WHERE dd.full_date = CURRENT_DATE);
 	
 		-- nếu chưa có record về ngày đó trong table
 		IF(@date_exits = 0) THEN 
 			
 			-- lấy ra date_sk cao nhất trong bảng
-			SET @max_date_sk = (SELECT IFNULL(MAX(date_sk), 0) FROM date_dim);
+			SET @max_date_sk = (SELECT IFNULL(MAX(date_sk), 0) FROM staging.date_dim);
 		
 			-- thêm record vào bảng date_dim theo ngày hiện tại 
-			INSERT INTO date_dim (
+			INSERT INTO staging.date_dim (
 				date_sk,
 				full_date,
 				day_since_2024,
@@ -266,10 +269,10 @@ BEGIN
 		END IF;
 	
 		-- lấy ra date_sk mới nhất trong bảng date_dim 
-		SET @max_date_sk = (SELECT MAX(dd.date_sk) FROM date_dim dd);
+		SET @max_date_sk = (SELECT MAX(dd.date_sk) FROM staging.date_dim dd);
 	
 		-- Cập nhật nhiều sản phẩm từ temp_product vào bảng product_staging
-		UPDATE product_staging ps
+		UPDATE staging.product_staging ps
 			JOIN temp_product tp ON ps.sku = tp.sku SET 
 				ps.product_name = tp.product_name,
 				ps.price = tp.price,
@@ -293,7 +296,6 @@ BEGIN
 				ps.id_date = @max_date_sk
 			-- Cập nhật các sản phẩm có thời gian mới hơn trong temp_product
 			WHERE tp.created_at > IFNULL(ps.created_at, '1970-01-01 00:00:00'); 
-		
 			
 		UPDATE control.`logs`
 		SET `status` = 'SUCCESS_TRANSFORM' 
