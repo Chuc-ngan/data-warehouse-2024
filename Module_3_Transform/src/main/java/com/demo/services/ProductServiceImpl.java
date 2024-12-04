@@ -37,13 +37,15 @@ public class ProductServiceImpl implements ProductService {
     public void TransformData() {
         LocalDateTime currentTime = LocalDateTime.now();
         String procedureCall = "CALL transform_and_cleaning_data()";
+        String res;
         try {
             // Gọi stored procedure và lấy kết quả
             List<Map<String, Object>> results = jdbcTemplate.queryForList(procedureCall);
+//            System.out.println(results.get(0));
 
-            for (Map<String, Object> record : results){
+            for (Map<String, Object> record : results) {
                 if ("Không có record nào hết".equals(record.get("error"))) {
-                    // Gửi email thông báo thành công
+                    // Gửi email thông báo thất bại
                     String from = environment.getProperty("spring.mail.username");
                     String body = "<html>" +
                             "<body>" +
@@ -56,7 +58,7 @@ public class ProductServiceImpl implements ProductService {
 
                     // Ghi log nếu bị lỗi
                     logService.insertLog(new Log(
-                           0,
+                            0,
                             LogLevel.ERROR,
                             null,
                             0,
@@ -70,21 +72,100 @@ public class ProductServiceImpl implements ProductService {
                     ));
                     return;
                 }
-                String productId= record.get("product_id").toString();
-                System.out.println(productId);
+                String productId = record.get("product_id").toString();
+                String sku = record.get("sku").toString();
+                String productName = record.get("product_name").toString();
+                String price = record.get("price").toString();
+                String originalPrice = record.get("original_price").toString();
+                String brand = record.get("brand_name").toString();
+                String discountValue = record.get("discount_value").toString();
+                String thumbnailUrl = record.get("thumbnail_url").toString();
+                String shortDescription = record.get("short_description").toString();
+                String imageUrls = record.get("image_urls").toString();
+                String colorOptions = record.get("color_options").toString();
+                String sizeOptions = record.get("size_options").toString();
+                String ratingAverage = record.get("rating_average").toString();
+                String reviewCount = record.get("review_count").toString();
+                String discountRate = record.get("discount_rate").toString();
+                String quantitySold = record.get("quantity_sold").toString();
+                String urlKey = record.get("url_key").toString();
+                String urlPath = record.get("url_path").toString();
+                String shortUrl = record.get("short_url").toString();
+                String productType = record.get("product_type").toString();
+                String createdAt = record.get("created_at").toString();
+                String idDate = record.get("id_date").toString();
+
+                // Kiểm tra null cho từng trường
+                if (checkFieldNull("product_id", productId) ||
+                        checkFieldNull("sku", sku) ||
+                        checkFieldNull("product_name", productName) ||
+                        checkFieldNull("price", price) ||
+                        checkFieldNull("original_price", originalPrice) ||
+                        checkFieldNull("brand_name", brand) ||
+                        checkFieldNull("discount_value", discountValue) ||
+                        checkFieldNull("thumbnail_url", thumbnailUrl) ||
+                        checkFieldNull("short_description", shortDescription) ||
+                        checkFieldNull("image_urls", imageUrls) ||
+                        checkFieldNull("color_options", colorOptions) ||
+                        checkFieldNull("size_options", sizeOptions) ||
+                        checkFieldNull("rating_average", ratingAverage) ||
+                        checkFieldNull("review_count", reviewCount) ||
+                        checkFieldNull("discount_rate", discountRate) ||
+                        checkFieldNull("quantity_sold", quantitySold) ||
+                        checkFieldNull("url_key", urlKey) ||
+                        checkFieldNull("url_path", urlPath) ||
+                        checkFieldNull("short_url", shortUrl) ||
+                        checkFieldNull("product_type", productType) ||
+                        checkFieldNull("created_at", createdAt) ||
+                        checkFieldNull("id_date", idDate)) {
+                    return; // Nếu có trường null, ngừng ngay lập tức
+                }
+
             }
         } catch (Exception e) {
-//            String from = environment.getProperty("spring.mail.username");
-//            String body = "<html>" +
-//                    "<body>" +
-//                    "<h2 style='color:red;'>Load data vào staging thất bại!</h2>" +
-//                    "<p>Đã xảy ra lỗi trong quá trình load dữ liệu vào staging</p>" +
-//                    "<p>" + e.getMessage() + "</p>" +
-//                    "</body>" +
-//                    "</html>";
-//            mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
-//                    "Load data vào database staging thất bại", body);
+            String from = environment.getProperty("spring.mail.username");
+            String body = "<html>" +
+                    "<body>" +
+                    "<h2 style='color:red;'>Transform thất bại!</h2>" +
+                    "<p>Đã xảy ra lỗi trong quá trình transform vào staging db</p>" +
+                    "<p>" + e.getMessage() + "</p>" +
+                    "</body>" +
+                    "</html>";
+            mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
+                    "Transform thất bại", body);
             e.printStackTrace();
         }
+    }
+
+    private boolean checkFieldNull(String fieldName, String fieldValue) {
+        if (fieldValue == null) {
+            // gởi mail là transform bị lỗi
+            String from = environment.getProperty("spring.mail.username");
+            String body = "<html>" +
+                    "<body>" +
+                    "<h2 style='color:red;'>Transform thất bại!</h2>" +
+                    "<p>" + fieldName + " có giá trị null" + "</p>" +
+                    "</body>" +
+                    "</html>";
+            mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
+                    "Transform thất bại!", body);
+
+            LocalDateTime currentTime = LocalDateTime.now();
+            logService.insertLog(new Log(
+                    0,
+                    LogLevel.ERROR,
+                    null,
+                    0,
+                    "Tranform",
+                    currentTime,
+                    fieldName + " có giá trị null",
+                    "",
+                    Status.FAILURE_TRANSFORM,
+                    "ADMIN",
+                    currentTime
+            ));
+            return true;
+        }
+        return false;
     }
 }

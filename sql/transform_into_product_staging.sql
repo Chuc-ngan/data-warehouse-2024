@@ -19,12 +19,12 @@ BEGIN
 	SELECT COUNT(*) INTO record_count
 		FROM `control`.`logs` 
 		WHERE `control`.`logs`.`status`='SUCCESS_LOAD_DATA' 
-			AND DATE(`control`.`logs`.update_time)=CURDATE();
+			AND DATE(`control`.`logs`.create_time)=CURDATE();
 	
 	SET @log_id=(SELECT l.id 
 						FROM `control`.`logs` l
 						WHERE l.`status`='SUCCESS_LOAD_DATA' 
-							AND DATE(l.update_time)=CURDATE());
+							AND DATE(l.create_time)=CURDATE());
 	
 	-- Nếu như không có record nào trong bảng kết quả
 	IF record_count = 0 THEN 
@@ -128,8 +128,8 @@ BEGIN
 								'\\s*US\\b', -- Bỏ "US" và khoảng trắng liền trước
 								''
 							),
-							'\\s*;\\s*', -- Thay dấu phẩy và khoảng trắng giữa các số
-                		'; ' -- Thành dấu chấm phẩy và khoảng trắng
+							'\\s*,\\s*', -- Thay dấu phẩy và khoảng trắng giữa các số
+                		';' -- Thành dấu chấm phẩy và khoảng trắng
 						)
 					)
 			END AS size_options,
@@ -247,8 +247,8 @@ BEGIN
 								'\\s*US\\b', -- Bỏ "US" và khoảng trắng liền trước
 								''
 							),
-							'\\s*;\\s*', -- Thay dấu phẩy và khoảng trắng giữa các số
-                		'; ' -- Thành dấu chấm phẩy và khoảng trắng
+							'\\s*,\\s*', -- Thay dấu phẩy và khoảng trắng giữa các số
+                		';' -- Thành dấu chấm phẩy và khoảng trắng
 						)
 					)
 			END AS size_options,
@@ -429,7 +429,7 @@ BEGIN
 				@max_date_sk -- Giá trị khóa thời gian
 			FROM staging_combined sc;
 			
--- 		UPDATE control.`logs`
+		-- UPDATE control.`logs`
 -- 		SET `status` = 'SUCCESS_TRANSFORM' 
 -- 		WHERE id = @log_id;
 		
