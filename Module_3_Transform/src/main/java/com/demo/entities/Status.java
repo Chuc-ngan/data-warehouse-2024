@@ -7,5 +7,7 @@ public enum Status {
     PROCESSING,  // Đang xử lý
     SUCCESS_LOAD_DATA,  // Load Data thành công
     FAILURE_LOAD_DATA,  // Load Data thất bại
+    SUCCESS_TRANSFORM, // Transform thành công
+    FAILURE_TRANSFORM,
     ACTIVE;
 }
