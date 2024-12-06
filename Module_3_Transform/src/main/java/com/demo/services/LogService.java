@@ -6,6 +6,5 @@ public interface LogService {
 
     public String getFilePathData(String id);
 
-
     public void insertLog(Log log);
 }

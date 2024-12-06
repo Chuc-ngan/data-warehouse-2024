@@ -32,25 +32,25 @@ public class ProductServiceImpl implements ProductService {
     private MailService mailService;
     @Autowired
     private LogService logService;
+    String from = environment.getProperty("spring.mail.username");
+    LocalDateTime currentTime = LocalDateTime.now();
 
     @Override
     public void TransformData() {
-        LocalDateTime currentTime = LocalDateTime.now();
         String procedureCall = "CALL transform_and_cleaning_data()";
         String res;
         try {
             // Gọi stored procedure và lấy kết quả
             List<Map<String, Object>> results = jdbcTemplate.queryForList(procedureCall);
-//            System.out.println(results.get(0));
 
             for (Map<String, Object> record : results) {
                 if ("Không có record nào hết".equals(record.get("error"))) {
                     // Gửi email thông báo thất bại
-                    String from = environment.getProperty("spring.mail.username");
                     String body = "<html>" +
                             "<body>" +
                             "<h2 style='color:red;'>Transform dữ liệu thất bại</h2>" +
-                            "<p>Vui lòng kiểm tra lại</p>" +
+                            "<p>Quy trình load file vào bảng tạm chưa được thực hiện, " +
+                            "không thể thực hiện transform</p>" +
                             "</body>" +
                             "</html>";
                     mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
@@ -121,9 +121,38 @@ public class ProductServiceImpl implements ProductService {
                     return; // Nếu có trường null, ngừng ngay lập tức
                 }
 
+                //24. Gọi phương thức checkPriceValidate để kiểm tra có trường nào liên quan tới giá tiền hợp lệ không?
+                if (checkPriceValidate(price, "price") ||
+                        checkPriceValidate(originalPrice, "original_price")) {
+                    return;
+                }
+
+                //27. Gửi mail tới người chịu trách nhiệm về việc bảo trì process với nội dung là Transform toàn bộ dữ liệu hoàn tất
+                String body = "<html>" +
+                        "<body>" +
+                        "<h2 style='color:green;'>Transform thành công!</h2>" +
+                        "<p>Transform toàn bộ dữ liệu hoàn tất</p>" +
+                        "</body>" +
+                        "</html>";
+                mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
+                        "Transform thành công!", body);
+
+                //26. Ghi log với nội dung là Transform thành công
+                logService.insertLog(new Log(
+                        0,
+                        LogLevel.ERROR,
+                        null,
+                        0,
+                        "Tranform",
+                        currentTime,
+                        "Transform thành công",
+                        "",
+                        Status.SUCCESS_TRANSFORM,
+                        "ADMIN",
+                        currentTime
+                ));
             }
         } catch (Exception e) {
-            String from = environment.getProperty("spring.mail.username");
             String body = "<html>" +
                     "<body>" +
                     "<h2 style='color:red;'>Transform thất bại!</h2>" +
@@ -133,14 +162,26 @@ public class ProductServiceImpl implements ProductService {
                     "</html>";
             mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
                     "Transform thất bại", body);
+
+            logService.insertLog(new Log(
+                    0,
+                    LogLevel.ERROR,
+                    null,
+                    0,
+                    "Tranform",
+                    currentTime,
+                    "Transform thất bại",
+                    "",
+                    Status.FAILURE_TRANSFORM,
+                    "ADMIN",
+                    currentTime
+            ));
             e.printStackTrace();
         }
     }
 
     private boolean checkFieldNull(String fieldName, String fieldValue) {
         if (fieldValue == null) {
-            // gởi mail là transform bị lỗi
-            String from = environment.getProperty("spring.mail.username");
             String body = "<html>" +
                     "<body>" +
                     "<h2 style='color:red;'>Transform thất bại!</h2>" +
@@ -159,6 +200,37 @@ public class ProductServiceImpl implements ProductService {
                     "Tranform",
                     currentTime,
                     fieldName + " có giá trị null",
+                    "",
+                    Status.FAILURE_TRANSFORM,
+                    "ADMIN",
+                    currentTime
+            ));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean checkPriceValidate(String fieldName, String fieldValue) {
+        if (fieldName.toLowerCase().contains("đ")) {
+            // 25. Gửi mail tới người chịu trách nhiệm về việc bảo trì process với nội dung là có chứa ký tự không hợp lệ trong giá tiền
+            String body = "<html>" +
+                    "<body>" +
+                    "<h2 style='color:red;'>Transform thất bại!</h2>" +
+                    "<p>" + fieldValue + "có chứa ký dự không hợp lệ như đ </p>" +
+                    "</body>" +
+                    "</html>";
+            mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
+                    "Transform thất bại", body);
+
+            //26. Ghi log về lỗi với nội dung là có chứa ký dự không hợp lệ như đ
+            logService.insertLog(new Log(
+                    0,
+                    LogLevel.ERROR,
+                    null,
+                    0,
+                    "Tranform",
+                    currentTime,
+                    fieldValue + "có chứa ký dự không hợp lệ như đ",
                     "",
                     Status.FAILURE_TRANSFORM,
                     "ADMIN",

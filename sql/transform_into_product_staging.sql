@@ -28,6 +28,12 @@ BEGIN
 	
 	-- Nếu như không có record nào trong bảng kết quả
 	IF record_count = 0 THEN 
+	
+-- 		UPDATE control.`logs`
+-- 		SET `status` = 'FAILURE_TRANSFORM' AND 
+-- 			control.`logs`.update_time=CURTIME();
+-- 		WHERE id = @log_id;
+		
 		-- In ra thông báo nếu không có record nào
 		SELECT 'Không có record nào hết' AS `error`;
 		-- SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No record found';
@@ -295,32 +301,6 @@ BEGIN
 			-- Lọc created_at (nếu NULL, trả về ngày hiện tại)
 			IFNULL(created_at, NOW()) AS created_at
 		FROM staging.staging_tiki_2;
-	
-		CREATE TEMPORARY TABLE temp_product AS
-		SELECT 
-			sc.product_id,
-			sc.sku,
-			sc.product_name,
-			sc.price,
-			sc.original_price,
-			sc.brand_name,
-			sc.discount_value,
-			sc.thumbnail_url,
-			sc.short_description,
-			sc.image_urls,
-			sc.color_options,
-			sc.size_options,
-			sc.rating_average,
-			sc.review_count,
-			sc.discount_rate,
-			sc.quantity_sold,
-			sc.url_key,
-			sc.url_path,
-			sc.short_url,
-			sc.product_type,
-			sc.created_at
-		FROM 
-			staging_combined AS sc;
 											
 		-- kiểm tra ngày hôm nay có tồn tại trong bảng date_dim không
 		SET @date_exits = (SELECT COUNT(*) 
@@ -379,7 +359,7 @@ BEGIN
 		-- lấy ra date_sk mới nhất trong bảng date_dim 
 		SET @max_date_sk = (SELECT MAX(dd.date_sk) FROM staging.date_dim dd);
 	
-		-- Cập nhật nhiều sản phẩm từ temp_product vào bảng product_staging
+		-- Cập nhật nhiều sản phẩm từ staging_combined vào bảng product_staging
 		INSERT INTO staging.product_staging(
 				product_id,
 				sku,
@@ -429,11 +409,12 @@ BEGIN
 				@max_date_sk -- Giá trị khóa thời gian
 			FROM staging_combined sc;
 			
-		-- UPDATE control.`logs`
--- 		SET `status` = 'SUCCESS_TRANSFORM' 
+-- 		UPDATE control.`logs`
+-- 		SET `status` = 'SUCCESS_TRANSFORM' AND 
+-- 			control.`logs`.update_time=CURTIME();
 -- 		WHERE id = @log_id;
 		
-		-- Trả về kết quả từ bảng tạm staging_combined để kiểm tra
+		-- Trả về kết quả từ bảng staging.product_staging để kiểm tra
 		SELECT * FROM staging.product_staging;
 			
 	END IF;

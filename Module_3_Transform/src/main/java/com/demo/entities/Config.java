@@ -27,6 +27,8 @@ public class Config {
     private String destinationPath;   // Đường dẫn đích đến
     private String backupPath;  // Đường dẫn lưu trữ bản sao dự phòng
     private String delimiter;  // Dấu phân cách trong file (ví dụ: , ; \t)
+
+    @Column(columnDefinition = "TEXT")
     private String columns;  // Danh sách các cột của dữ liệu cần được crawl
     private String tables;  // Danh sách các bảng trong cơ sở dữ liệu
 
