@@ -19,7 +19,7 @@ BEGIN
 	SELECT COUNT(*) INTO record_count
 		FROM `control`.`logs` 
 		WHERE `control`.`logs`.`status`='SUCCESS_LOAD_DATA' 
-			AND DATE(`control`.`logs`.create_time)=CURDATE();
+			AND DATE(`control`.`logs`.update_time)=CURDATE();
 	
 	SET @log_id=(SELECT l.id 
 						FROM `control`.`logs` l
@@ -29,14 +29,11 @@ BEGIN
 	-- Nếu như không có record nào trong bảng kết quả
 	IF record_count = 0 THEN 
 	
--- 		UPDATE control.`logs`
--- 		SET `status` = 'FAILURE_TRANSFORM' AND 
--- 			control.`logs`.update_time=CURTIME();
--- 		WHERE id = @log_id;
+			INSERT INTO control.`logs` (id_config, `count`, log_level, `status`, create_time, update_time, created_by, error_message, location) VALUES 
+			(0, 0, "ERROR", "FAILURE_TRANSFORM", CURTIME(), CURTIME(), "Admin", "Transform thất bại do tiến trình trước đó chưa thực hiện", "Transform");
 		
 		-- In ra thông báo nếu không có record nào
 		SELECT 'Không có record nào hết' AS `error`;
-		-- SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No record found';
 	ELSE 
 		-- Tạo bảng tạm staging_combined để chứa dữ liệu từ bảng staging_tiki
 		CREATE TEMPORARY TABLE staging_combined (
@@ -100,7 +97,7 @@ BEGIN
 			END AS original_price,
 	 	
 			-- Lọc tên thương hiệu (brand_name), nếu là NULL thì trả về giá trị mặc định
-			IFNULL(brand_name, 'Chưa có') AS brand_name,
+			IFNULL(brand_name, '') AS brand_name,
 	 	
 			-- Lọc giá trị discount_value (nếu NULL hoặc không hợp lệ, trả về 0)
 			CASE 
@@ -112,16 +109,16 @@ BEGIN
 			thumbnail_url,
 			
 			-- Lọc short_description (nếu NULL, trả về 'Không có thông tin mô tả')
-			IFNULL(short_description, 'Không có thông tin mô tả') AS short_description,
+			IFNULL(short_description, '') AS short_description,
 			
 			image_urls,
 			
 			-- Lọc color_options (nếu NULL, trả về 'Không có màu sắc khác')
-			IFNULL(color_options, 'Không có màu sắc khác') AS color_options,
+			IFNULL(color_options, '') AS color_options,
 	
 			-- Lọc size_options (nếu NULL, trả về 'Không có kích thước khác')
 			CASE 
-				WHEN size_options IS NULL THEN 'Không có kích thước khác'
+				WHEN size_options IS NULL THEN ''
 				ELSE 
 					TRIM(
 						REGEXP_REPLACE(
@@ -168,16 +165,16 @@ BEGIN
 			END AS quantity_sold,
 			
 			-- Lọc url_key (nếu NULL, trả về 'No URL key')
-			IFNULL(url_key, 'No URL key') AS url_key,
+			IFNULL(url_key, '') AS url_key,
 			
 			-- Lọc url_path (nếu NULL, trả về 'No URL path')
-			IFNULL(url_path, 'No URL path') AS url_path,
+			IFNULL(url_path, '') AS url_path,
 			
 			-- Lọc short_url (nếu NULL, trả về 'No short URL')
-			IFNULL(short_url, 'No short URL') AS short_url,
+			IFNULL(short_url, '') AS short_url,
 			
 			-- Lọc product_type (nếu NULL, trả về 'No product type')
-			IFNULL(product_type, 'No product type') AS product_type,
+			IFNULL(product_type, '') AS product_type,
 			
 			-- Lọc created_at (nếu NULL, trả về ngày hiện tại)
 			IFNULL(created_at, NOW()) AS created_at
@@ -409,10 +406,12 @@ BEGIN
 				@max_date_sk -- Giá trị khóa thời gian
 			FROM staging_combined sc;
 			
--- 		UPDATE control.`logs`
--- 		SET `status` = 'SUCCESS_TRANSFORM' AND 
--- 			control.`logs`.update_time=CURTIME();
--- 		WHERE id = @log_id;
+		UPDATE control.`logs`
+		SET `status` = 'SUCCESS_TRANSFORM',
+			control.`logs`.error_message="Transform thành công",
+			control.`logs`.location="Transform",
+			control.`logs`.update_time=CURTIME()
+		WHERE id = @log_id;
 		
 		-- Trả về kết quả từ bảng staging.product_staging để kiểm tra
 		SELECT * FROM staging.product_staging;

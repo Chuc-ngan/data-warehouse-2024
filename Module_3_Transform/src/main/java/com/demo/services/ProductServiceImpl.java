@@ -32,7 +32,6 @@ public class ProductServiceImpl implements ProductService {
     private MailService mailService;
     @Autowired
     private LogService logService;
-    String from = environment.getProperty("spring.mail.username");
     LocalDateTime currentTime = LocalDateTime.now();
 
     @Override
@@ -53,25 +52,13 @@ public class ProductServiceImpl implements ProductService {
                             "không thể thực hiện transform</p>" +
                             "</body>" +
                             "</html>";
+
+                    String from = environment.getProperty("spring.mail.username");
                     mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
                             "Transform thất bại", body);
-
-                    // Ghi log nếu bị lỗi
-                    logService.insertLog(new Log(
-                            0,
-                            LogLevel.ERROR,
-                            null,
-                            0,
-                            "Tranform",
-                            currentTime,
-                            "Không tìm thấy record nào",
-                            "",
-                            Status.FAILURE_TRANSFORM,
-                            "ADMIN",
-                            currentTime
-                    ));
                     return;
                 }
+
                 String productId = record.get("product_id").toString();
                 String sku = record.get("sku").toString();
                 String productName = record.get("product_name").toString();
@@ -127,6 +114,14 @@ public class ProductServiceImpl implements ProductService {
                     return;
                 }
 
+                if(checkNegativeNumber("discount_value", discountValue)||
+                        checkNegativeNumber("rating_average", ratingAverage)||
+                        checkNegativeNumber("review_count", reviewCount)||
+                        checkNegativeNumber("discount_rate", discountRate)||
+                        checkNegativeNumber("quantity_sold", quantitySold)){
+                    return;
+                }
+
                 //27. Gửi mail tới người chịu trách nhiệm về việc bảo trì process với nội dung là Transform toàn bộ dữ liệu hoàn tất
                 String body = "<html>" +
                         "<body>" +
@@ -134,23 +129,10 @@ public class ProductServiceImpl implements ProductService {
                         "<p>Transform toàn bộ dữ liệu hoàn tất</p>" +
                         "</body>" +
                         "</html>";
+
+                String from = environment.getProperty("spring.mail.username");
                 mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
                         "Transform thành công!", body);
-
-                //26. Ghi log với nội dung là Transform thành công
-                logService.insertLog(new Log(
-                        0,
-                        LogLevel.ERROR,
-                        null,
-                        0,
-                        "Tranform",
-                        currentTime,
-                        "Transform thành công",
-                        "",
-                        Status.SUCCESS_TRANSFORM,
-                        "ADMIN",
-                        currentTime
-                ));
             }
         } catch (Exception e) {
             String body = "<html>" +
@@ -160,9 +142,18 @@ public class ProductServiceImpl implements ProductService {
                     "<p>" + e.getMessage() + "</p>" +
                     "</body>" +
                     "</html>";
+
+            String from = environment.getProperty("spring.mail.username");
             mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
                     "Transform thất bại", body);
 
+            Integer logId = logService.getLogIdForToday();
+            if (logId != null) {
+                logService.updateLogStatus(
+                        logId,
+                        "Transform thất bại"
+                );
+            } else {
             logService.insertLog(new Log(
                     0,
                     LogLevel.ERROR,
@@ -170,12 +161,13 @@ public class ProductServiceImpl implements ProductService {
                     0,
                     "Tranform",
                     currentTime,
-                    "Transform thất bại",
+                    "Không tìm thấy record nào",
                     "",
                     Status.FAILURE_TRANSFORM,
                     "ADMIN",
                     currentTime
             ));
+            }
             e.printStackTrace();
         }
     }
@@ -188,10 +180,17 @@ public class ProductServiceImpl implements ProductService {
                     "<p>" + fieldName + " có giá trị null" + "</p>" +
                     "</body>" +
                     "</html>";
+
+            String from = environment.getProperty("spring.mail.username");
             mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
                     "Transform thất bại!", body);
 
-            LocalDateTime currentTime = LocalDateTime.now();
+            Integer logId = logService.getLogIdForToday();
+            logService.updateLogStatus(
+                    logId,
+                    "Transform thất bại do" + fieldName + " có giá trị null"
+            );
+
             logService.insertLog(new Log(
                     0,
                     LogLevel.ERROR,
@@ -199,12 +198,13 @@ public class ProductServiceImpl implements ProductService {
                     0,
                     "Tranform",
                     currentTime,
-                    fieldName + " có giá trị null",
+                    "Transform thất bại do" + fieldName + " có giá trị null",
                     "",
                     Status.FAILURE_TRANSFORM,
                     "ADMIN",
                     currentTime
             ));
+
             return true;
         }
         return false;
@@ -219,25 +219,72 @@ public class ProductServiceImpl implements ProductService {
                     "<p>" + fieldValue + "có chứa ký dự không hợp lệ như đ </p>" +
                     "</body>" +
                     "</html>";
+
+            String from = environment.getProperty("spring.mail.username");
             mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
                     "Transform thất bại", body);
 
             //26. Ghi log về lỗi với nội dung là có chứa ký dự không hợp lệ như đ
-            logService.insertLog(new Log(
-                    0,
-                    LogLevel.ERROR,
-                    null,
-                    0,
-                    "Tranform",
-                    currentTime,
-                    fieldValue + "có chứa ký dự không hợp lệ như đ",
-                    "",
-                    Status.FAILURE_TRANSFORM,
-                    "ADMIN",
-                    currentTime
-            ));
+            Integer logId = logService.getLogIdForToday();
+            logService.updateLogStatus(
+                    logId,
+                    "Transform thất bại do" + fieldName + " có chứa ký dự không hợp lệ như đ"
+            );
+
+//            logService.insertLog(new Log(
+//                    0,
+//                    LogLevel.ERROR,
+//                    null,
+//                    0,
+//                    "Tranform",
+//                    currentTime,
+//                    "Transform thất bại do" + fieldName + " có chứa ký dự không hợp lệ như đ",
+//                    "",
+//                    Status.FAILURE_TRANSFORM,
+//                    "ADMIN",
+//                    currentTime
+//            ));
+
             return true;
         }
+        return false;
+    }
+
+    private boolean checkNegativeNumber(String fieldName, String fieldValue) {
+        double value = Double.parseDouble(fieldValue);
+        String body = "<html>" +
+                "<body>" +
+                "<h2 style='color:red;'>Transform thất bại!</h2>" +
+                "<p>" + fieldValue + "có chứa trường có giá trị âm</p>" +
+                "</body>" +
+                "</html>";
+
+        String from = environment.getProperty("spring.mail.username");
+        mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
+                "Transform thất bại", body);
+        if (value < 0) {
+//            logService.insertLog(new Log(
+//                    0,
+//                    LogLevel.ERROR,
+//                    null,
+//                    0,
+//                    "Tranform",
+//                    currentTime,
+//                    "Transform thất bại do" + fieldName + " có chứa trường có giá trị âm",
+//                    "",
+//                    Status.FAILURE_TRANSFORM,
+//                    "ADMIN",
+//                    currentTime
+//            ));
+
+            Integer logId = logService.getLogIdForToday();
+            logService.updateLogStatus(
+                    logId,
+                    "Transform thất bại do" + fieldName + " có chứa trường có giá trị âm"
+            );
+            return true;
+        }
+
         return false;
     }
 }
