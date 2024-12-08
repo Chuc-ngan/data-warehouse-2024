@@ -11,7 +11,7 @@ public interface LogService {
 
     public void insertLog(Log log);
 
-    void updateLogStatus(int logId, String errorMessage);
+    void updateLogStatus(int logId, String errorMessage, Status status);
 
     Integer getLogIdForToday();
 }
