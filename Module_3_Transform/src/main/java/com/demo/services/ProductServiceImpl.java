@@ -32,7 +32,7 @@ public class ProductServiceImpl implements ProductService {
     private MailService mailService;
     @Autowired
     private LogService logService;
-    LocalDateTime currentTime = LocalDateTime.now();
+    LocalDateTime currentTime;
 
     @Override
     public void TransformData() {
@@ -43,6 +43,7 @@ public class ProductServiceImpl implements ProductService {
             List<Map<String, Object>> results = jdbcTemplate.queryForList(procedureCall);
 
             for (Map<String, Object> record : results) {
+                currentTime = LocalDateTime.now();
                 if ("Không có record nào hết".equals(record.get("error"))) {
                     // Gửi email thông báo thất bại
                     String body = "<html>" +
@@ -50,6 +51,7 @@ public class ProductServiceImpl implements ProductService {
                             "<h2 style='color:red;'>Transform dữ liệu thất bại</h2>" +
                             "<p>Quy trình load file vào bảng tạm chưa được thực hiện, " +
                             "không thể thực hiện transform</p>" +
+                            "<p>" + "Vào lúc " + currentTime + "</p>" +
                             "</body>" +
                             "</html>";
 
@@ -127,6 +129,7 @@ public class ProductServiceImpl implements ProductService {
                         "<body>" +
                         "<h2 style='color:green;'>Transform thành công!</h2>" +
                         "<p>Transform toàn bộ dữ liệu hoàn tất</p>" +
+                        "<p>" + "Vào lúc " + currentTime + "</p>" +
                         "</body>" +
                         "</html>";
 
@@ -139,6 +142,7 @@ public class ProductServiceImpl implements ProductService {
                     "<body>" +
                     "<h2 style='color:red;'>Transform thất bại!</h2>" +
                     "<p>Đã xảy ra lỗi trong quá trình transform vào staging db</p>" +
+                    "<p>" + "Vào lúc " + currentTime + "</p>" +
                     "<p>" + e.getMessage() + "</p>" +
                     "</body>" +
                     "</html>";
@@ -154,6 +158,7 @@ public class ProductServiceImpl implements ProductService {
                         "Transform thất bại"
                 );
             } else {
+                currentTime = LocalDateTime.now();
             logService.insertLog(new Log(
                     0,
                     LogLevel.ERROR,
@@ -173,11 +178,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private boolean checkFieldNull(String fieldName, String fieldValue) {
+        currentTime = LocalDateTime.now();
         if (fieldValue == null) {
             String body = "<html>" +
                     "<body>" +
                     "<h2 style='color:red;'>Transform thất bại!</h2>" +
                     "<p>" + fieldName + " có giá trị null" + "</p>" +
+                    "<p>" + "Vào lúc " + currentTime + "</p>" +
                     "</body>" +
                     "</html>";
 
@@ -217,6 +224,7 @@ public class ProductServiceImpl implements ProductService {
                     "<body>" +
                     "<h2 style='color:red;'>Transform thất bại!</h2>" +
                     "<p>" + fieldValue + "có chứa ký dự không hợp lệ như đ </p>" +
+                    "<p>" + "Vào lúc " + currentTime + "</p>" +
                     "</body>" +
                     "</html>";
 
@@ -251,11 +259,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private boolean checkNegativeNumber(String fieldName, String fieldValue) {
+        currentTime = LocalDateTime.now();
         double value = Double.parseDouble(fieldValue);
         String body = "<html>" +
                 "<body>" +
                 "<h2 style='color:red;'>Transform thất bại!</h2>" +
                 "<p>" + fieldValue + "có chứa trường có giá trị âm</p>" +
+                "<p>" + "Vào lúc " + currentTime + "</p>" +
                 "</body>" +
                 "</html>";
 
