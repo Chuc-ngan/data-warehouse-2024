@@ -254,20 +254,6 @@ public class ProductServiceImpl implements ProductService {
                         Status.FAILURE_TRANSFORM
                 );
 
-//                logService.insertLog(new Log(
-//                        0,
-//                        LogLevel.ERROR,
-//                        null,
-//                        0,
-//                        "Tranform",
-//                        currentTime,
-//                        "Transform thất bại do" + field + " có giá trị null",
-//                        "",
-//                        Status.FAILURE_TRANSFORM,
-//                        "ADMIN",
-//                        currentTime
-//                ));
-
                 return true;
             }
         }
