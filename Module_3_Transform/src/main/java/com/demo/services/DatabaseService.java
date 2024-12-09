@@ -1,5 +1,7 @@
 package com.demo.services;
 
+import com.demo.entities.Config;
+import com.demo.repository.ConfigRepository;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,12 +14,21 @@ public class DatabaseService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public DataSource connectToStagingDatabase() {
-        String url = "jdbc:mysql://localhost:3306/" + "staging";
-        String username = "root";
-        String password = "";
+    @Autowired
+    private ConfigRepository configRepository;
 
-        // Tạo DataSource dựa trên thông tin lấy được
+    public DataSource connectToStagingDatabase(String configId) {
+        // Lấy config dựa vào configId được truyền vào
+        Config config = configRepository.findById(configId).orElseThrow(() ->
+                new RuntimeException("Config with ID " + configId + " not found"));
+
+        // Lấy thông tin kết nối từ config
+        String url = "jdbc:mysql://" + config.getStagingSourceHost() + ":"
+                + config.getStagingSourcePort() + "/staging";
+        String username = config.getStagingSourceUsername();
+        String password = config.getStagingSourcePassword();
+
+        // Tạo DataSource dựa trên thông tin từ config
         HikariDataSource dataSource = new HikariDataSource();
         dataSource.setJdbcUrl(url);
         dataSource.setUsername(username);
