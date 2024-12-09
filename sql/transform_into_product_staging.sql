@@ -12,30 +12,32 @@ BEGIN
 	DROP TEMPORARY TABLE IF EXISTS staging_combined;
 	DROP TEMPORARY TABLE IF EXISTS temp_product;
 	
-	-- xóa toàn bộ dữ liệu bảng bảng product_staging trong staging db trước khi lọc dữ liệu
+	-- 4. Xóa toàn bộ dữ liệu cũ (truncate) trong bảng staging.product_staging
    TRUNCATE TABLE staging.product_staging;
 	
-	-- kiểm trang tình trạng lần crawl gần nhất trong bảng logs
+	--	5. Lấy số lượng bản ghi với điều kiện là control.logs.status có phải là SUCCESS_LOAD_DATA và control.logs.update_time có khớp với ngày hiện tại
 	SELECT COUNT(*) INTO record_count
 		FROM `control`.`logs` 
 		WHERE `control`.`logs`.`status`='SUCCESS_LOAD_DATA' 
 			AND DATE(`control`.`logs`.update_time)=CURDATE();
-	
+  	-- 6. Lấy ra log_id với điều kiện là control.logs.status có phải là SUCCESS_LOAD_DATA và control.logs.update_time phải khớp với ngày hiện tại.
 	SET @log_id=(SELECT control.`logs`.id
 						FROM `control`.`logs`
 						WHERE control.`logs`.`status`='SUCCESS_LOAD_DATA' 
 							AND DATE(control.`logs`.update_time)=CURDATE());
 	
-	-- Nếu như không có record nào trong bảng kết quả
+	-- 7. Kiểm tra số lượng bản ghi
 	IF record_count = 0 THEN 
 	
+			-- 8. Trả về kết quả là không có record nào hết
 			INSERT INTO control.`logs` (id_config, `count`, log_level, `status`, create_time, update_time, created_by, error_message, location) VALUES 
 			(0, 0, "ERROR", "FAILURE_TRANSFORM", CURTIME(), CURTIME(), "Admin", "Transform thất bại do tiến trình trước đó chưa thực hiện", "Transform");
 		
 		-- In ra thông báo nếu không có record nào
 		SELECT 'Không có record nào hết' AS `error`;
 	ELSE 
-		-- Tạo bảng tạm staging_combined để chứa dữ liệu từ bảng staging_tiki
+	
+		-- 9. Tạo bảng tạm có tên là staging_combined chứa các trường dữ liệu tương đồng với product_staging
 		CREATE TEMPORARY TABLE staging_combined (
 			`id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 			`product_id` BIGINT DEFAULT NULL,
@@ -61,8 +63,7 @@ BEGIN
 			`created_at` TIMESTAMP NULL DEFAULT NULL
 		); SET SESSION group_concat_max_len = 1000000;
 	 
-		-- loại bỏ dữ liệu dữ thừa và dữ liệu bị null và 
-		-- insert record vào bảng tạm từ staging_tiki_1 
+		-- 9. Lấy dữ liệu từ bảng staging_tiki_1 và staging_tiki_2, sau đó chuyển về kiểu dữ liệu tiêu chuẩn
 		INSERT INTO staging_combined (
 			product_id, sku, product_name, price, original_price, brand_name, discount_value,
 			thumbnail_url, short_description, image_urls, color_options, size_options,
@@ -299,18 +300,18 @@ BEGIN
 			IFNULL(created_at, NOW()) AS created_at
 		FROM staging.staging_tiki_2;
 											
-		-- kiểm tra ngày hôm nay có tồn tại trong bảng date_dim không
+		-- 10. Lấy ra ngày hiện tại trong bảng date_dim
 		SET @date_exits = (SELECT COUNT(*) 
 								FROM staging.date_dim dd
 								WHERE dd.full_date = CURRENT_DATE);
 	
-		-- nếu chưa có record về ngày đó trong product_staging
+		-- 11. Kiểm tra ngày hôm nay có tồn tại trong bảng date_dim không
 		IF(@date_exits = 0) THEN 
 			
-			-- lấy ra date_sk cao nhất trong bảng
+			-- 12. Lấy ra max_date_sk lớn nhất trong bảng
 			SET @max_date_sk = (SELECT IFNULL(MAX(date_sk), 0) FROM staging.date_dim);
 		
-			-- thêm record vào bảng date_dim theo ngày hiện tại 
+			-- 13. Thêm record mới vào staging.date_dim với giá trị là ngày hiện tại với date_sk tăng lên 1
 			INSERT INTO staging.date_dim (
 				date_sk,
 				full_date,
@@ -353,10 +354,10 @@ BEGIN
 			);
 		END IF;
 	
-		-- lấy ra date_sk mới nhất trong bảng date_dim 
+		-- 14. Lấy max_date_sk là date_sk có giá trị lớn nhất trong bảng date_dim
 		SET @max_date_sk = (SELECT MAX(dd.date_sk) FROM staging.date_dim dd);
 	
-		-- Cập nhật nhiều sản phẩm từ staging_combined vào bảng product_staging
+		-- 15. Thêm toàn bộ record vào bảng staging.product_staging với giá trị lấy trong bảng staging_combined
 		INSERT INTO staging.product_staging(
 				product_id,
 				sku,
@@ -413,7 +414,7 @@ BEGIN
 			control.`logs`.update_time=CURTIME()
 		WHERE id = @log_id;
 		
-		-- Trả về kết quả từ bảng staging.product_staging để kiểm tra
+		-- 17. Lấy toàn bộ kết quả từ bảng staging.product_staging để kiểm tra 
 		SELECT * FROM staging.product_staging;
 			
 	END IF;

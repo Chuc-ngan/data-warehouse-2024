@@ -46,7 +46,7 @@ public class ProductServiceImpl implements ProductService {
             for (Map<String, Object> record : results) {
                 currentTime = LocalDateTime.now();
                 if ("Không có record nào hết".equals(record.get("error"))) {
-                    // Gửi email thông báo thất bại
+                    // 19. Gửi mail về kết quả transform thất bại
                     String body = "<html>" +
                             "<body>" +
                             "<h2 style='color:red;'>Transform dữ liệu thất bại</h2>" +
@@ -62,7 +62,7 @@ public class ProductServiceImpl implements ProductService {
                     return;
                 }
 
-                // Kiểm tra xem có trường nào null không
+                // 20. Gọi phương thức isAnyFieldNull để kiểm tra bất kỳ trường dữ liệu nào là null không?
                 if (isAnyFieldNull(record)) {
                     return; // Nếu có trường null, ngừng ngay lập tức
                 }
@@ -90,12 +90,14 @@ public class ProductServiceImpl implements ProductService {
                 String createdAt = record.get("created_at").toString();
                 String idDate = record.get("id_date").toString();
 
-                //24. Gọi phương thức checkPriceValidate để kiểm tra có trường nào liên quan tới giá tiền hợp lệ không?
+                // 24. Gọi phương thức checkPriceValidate để kiểm tra có trường nào liên quan tới
+                // giá tiền hợp lệ không?
                 if (checkPriceValidate(price, "price") ||
                         checkPriceValidate(originalPrice, "original_price")) {
                     return;
                 }
 
+                // 27. Gọi tới hàm checkNegativeNumber để kiểm tra giá trị có chứa số âm không?
                 if(checkNegativeNumber("discount_value", discountValue)||
                         checkNegativeNumber("rating_average", ratingAverage)||
                         checkNegativeNumber("review_count", reviewCount)||
@@ -106,7 +108,7 @@ public class ProductServiceImpl implements ProductService {
 
             }
 
-            //27. Gửi mail tới người chịu trách nhiệm về việc bảo trì process với nội dung là Transform toàn bộ dữ liệu hoàn tất
+            // 30. Gửi mail nội dung là Transform toàn bộ dữ liệu hoàn tất
             String body = "<html>" +
                     "<body>" +
                     "<h2 style='color:green;'>Transform thành công!</h2>" +
@@ -115,6 +117,7 @@ public class ProductServiceImpl implements ProductService {
                     "</body>" +
                     "</html>";
 
+            // 31. Ghi log với nội dung là Transform thành công
             String from = environment.getProperty("spring.mail.username");
             mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
                     "Transform thành công!", body);
@@ -200,6 +203,7 @@ public class ProductServiceImpl implements ProductService {
         currentTime = LocalDateTime.now();
         double value = Double.parseDouble(fieldValue);
         if (value < 0.0) {
+            // 28. Gửi mail với nội dung là Transform thất bại do có chứa trường có giá trị âm
             String body = "<html>" +
                     "<body>" +
                     "<h2 style='color:red;'>Transform thất bại!</h2>" +
@@ -212,6 +216,7 @@ public class ProductServiceImpl implements ProductService {
             mailService.send(from, "phamnhuttan.9a6.2017@gmail.com",
                     "Transform thất bại", body);
 
+            // 29. Ghi log là Transform thất bại do có chứa trường có giá trị âm
             Integer logId = logService.getLogIdForToday();
             logService.updateLogStatus(
                     logId,
@@ -228,7 +233,8 @@ public class ProductServiceImpl implements ProductService {
     private boolean isAnyFieldNull(Map<String, Object> record) {
         for (String field : record.keySet()) {
             if (record.get(field) == null) {
-                // Gửi email khi phát hiện trường null
+                // 22. Gửi mail tới người chịu trách nhiệm về việc bảo trì process với nôi dung là
+                // fieldname nào có giá trị null và nội dung là transform thất bại
                 String body = "<html>" +
                         "<body>" +
                         "<h2 style='color:red;'>Transform thất bại!</h2>" +
@@ -240,6 +246,7 @@ public class ProductServiceImpl implements ProductService {
                 String from = environment.getProperty("spring.mail.username");
                 mailService.send(from, "phamnhuttan.9a6.2017@gmail.com", "Transform thất bại", body);
 
+                // 23. Ghi log là transform thất bại do fieldname có giá trị null
                 Integer logId = logService.getLogIdForToday();
                 logService.updateLogStatus(
                         logId,
